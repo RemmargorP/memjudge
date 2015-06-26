@@ -66,7 +66,9 @@ func (s *Server) init() {
 	}
 }
 
-func (s *Server) Stop() {
+func Stop(seconds int64) {
+	time.Sleep(time.Duration(seconds) * time.Second)
+	os.Exit(0)
 }
 
 func (s *Server) Serve() {
@@ -94,7 +96,7 @@ func handler(rw http.ResponseWriter, req *http.Request) {
 	switch option {
 	case "stop":
 		fmt.Fprintf(rw, "<p><strong>Server gonna be stopped now.</strong></p>")
-		defer os.Exit(0)
+		go Stop(2)
 	default:
 		fmt.Fprintf(rw, "<p>Unknown option: <strong>%s</strong></p>", option)
 	}

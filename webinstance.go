@@ -2,13 +2,15 @@ package myjudge
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
 
 const (
-	HTTPPORT = ":8080"
-	TITLE    = "Online Judge"
+	HTTPPORT  = ":8080"
+	TITLE     = "Online Judge"
+	PublicDir = "/var/www/myjudge/public/"
 )
 
 type WebInstance struct {
@@ -17,6 +19,8 @@ type WebInstance struct {
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<html><title>%s</title><body>", TITLE)
+	buffer, _ := ioutil.ReadFile(PublicDir + "index.html")
+	fmt.Fprintf(w, string(buffer))
 	fmt.Fprintf(w, "</body></html>")
 }
 
