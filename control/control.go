@@ -13,7 +13,6 @@ import (
 const Address = "localhost"
 
 func main() {
-
 	if len(os.Args) < 2 {
 		fmt.Println("Options:\nstart|stop")
 		return
@@ -47,7 +46,6 @@ func main() {
 				server.Config = myjudge.DefaultServerConfig()
 				server.Serve()
 			}
-
 		} else {
 			fmt.Println("Server is already running")
 		}
