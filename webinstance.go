@@ -16,6 +16,7 @@ const (
 	PublicDir       = "/var/www/myjudge/public/"
 	MONGODBUSER     = "myjudge"
 	MONGODBPASSWORD = ""
+	AuthInfoCookie  = "authinfo"
 )
 
 type WebInstance struct {
@@ -33,9 +34,48 @@ func (wi *WebInstance) writeHeader(w http.ResponseWriter, r *http.Request) {
 		"</p>",
 		"</td>", "</tr>",
 		"<tr height=\"20\">", "<td align=\"right\">",
-		"</td>", "</tr>",
 	)
-	//TODO: check cookie user info
+	cookie, _ := r.Cookie(AuthInfoCookie)
+	log.Println(cookie)
+	var User *User
+	User = nil
+
+	if cookie != nil {
+		expires := cookie.Expires
+		SessionID := cookie.Value
+		wi.DBConnection.DB("myjudge").C("users").Find(bson.M{"lastsessionid": SessionID}).One(&User)
+
+		log.Println(User)
+		if User.LogoutDate.Before(expires) {
+			cookie.MaxAge = -1
+			cookie.Expires = User.LogoutDate
+			http.SetCookie(w, cookie)
+		}
+	}
+	log.Println(User)
+	if User == nil {
+		fmt.Fprint(w,
+			"<form action=\"/register/\">",
+			"<input type=\"submit\" value=\"Register\" style=\"height:18\">",
+			"</form>",
+			"<form action=\"/login/\" method=\"post\">",
+			"Login:",
+			"<input type=\"text\" name=\"login\" value size=\"8\" style=\"height:18\">  &nbsp;",
+			"Password:",
+			"<input type=\"password\" name=\"password\" value size=\"8\" style=\"height:18\">  &nbsp;",
+			"<input type=\"submit\" value=\"Ok\" style=\"height:18\">",
+			"</form>",
+		)
+	} else {
+		fmt.Fprint(w, "You are logged in as <strong>", User.Name, "</strong>")
+		fmt.Fprint(w,
+			"<form action=\"/logout/\">",
+			"<input type=\"submit\" value=\"Logout\" style=\"height:18\">",
+			"</form>",
+		)
+	}
+
+	fmt.Fprint(w, "</td>", "</tr>")
 }
 func (wi *WebInstance) writeFooter(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "</table>")
@@ -60,7 +100,7 @@ func (wi *WebInstance) loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if len(result) == 0 {
 		//Unknown login - redirect to /
-		fmt.Fprint(w, "<meta http-equiv=\"refresh\" content=\"0; url=/\" />")
+		fmt.Fprint(w, "<head><meta http-equiv=\"refresh\" content=\"0;/\"></head>")
 		return
 	} else {
 		h := fnv.New64a()
@@ -71,15 +111,46 @@ func (wi *WebInstance) loginHandler(w http.ResponseWriter, r *http.Request) {
 			//TODO: Write Cookie and redirect
 		} else {
 			//Incorrect password - redirect to /
-			fmt.Fprint(w, "<meta http-equiv=\"refresh\" content=\"0; url=/\" />")
+			fmt.Fprint(w, "<head><meta http-equiv=\"refresh\" content=\"0;/\"></head>")
 		}
 	}
+}
+func (wi *WebInstance) logoutHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "<head><meta http-equiv=\"refresh\" content=\"0;/\"></head>")
+	http.SetCookie(w, &http.Cookie{Name: AuthInfoCookie, MaxAge: -1})
+}
+func (wi *WebInstance) registerHandler(w http.ResponseWriter, r *http.Request) {
+	wi.writeHeader(w, r)
 
+	fmt.Fprint(w,
+		"<tr height=\"100"+"%\">", "<td align=\"center\">",
+		"<form action=\"/register/check/\" method=\"post\">",
+		"<table cellpadding=\"0\" cellspacing=\"10px\" border=\"0\">",
+		"<tr><td>Login:</td>",
+		"<td><input type=\"text\" name=\"login\" value size=\"20\"></td></tr><p>",
+		"<tr><td>Password:</td>",
+		"<td><input type=\"password\" name=\"password\" value size=\"20\"></td></tr><p>",
+		"<tr><td>Password check:</td>",
+		"<td><input type=\"password\" name=\"passwordcheck\" value size=\"20\"></td></tr><p>",
+		"<tr><td>Email:</td>",
+		"<td><input type=\"text\" name=\"email\" value size=\"20\"></td></tr><p>",
+		"<tr><td>Name:</td>",
+		"<td><input type=\"text\" name=\"name\" value size=\"20\"></td></tr><p>",
+		"</table>",
+		"<input type=\"submit\" value=\"Ok\" style=\"height:18\"><p>",
+		"</form>",
+	)
+
+	fmt.Fprint(w, "</td></tr>")
+
+	wi.writeFooter(w, r)
 }
 
 func (wi *WebInstance) init() {
 	http.HandleFunc("/", wi.rootHandler)
 	http.HandleFunc("/login/", wi.loginHandler)
+	http.HandleFunc("/logout/", wi.logoutHandler)
+	http.HandleFunc("/register/", wi.registerHandler)
 	log.Fatal(http.ListenAndServe(HTTPPORT, nil))
 }
 
