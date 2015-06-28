@@ -5,6 +5,8 @@ import (
 	"hash/fnv"
 	"log"
 	"net/http"
+	"regexp"
+	"time"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -28,7 +30,7 @@ func (wi *WebInstance) writeHeader(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<html><title>%s</title><body>", TITLE)
 	fmt.Fprint(w, "",
 		"<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">",
-		"<tr height=\"30\">", "<td align=\"center\">",
+		"<tr>", "<td align=\"center\">",
 		"<p style=\"font-size:26px\">",
 		"MyJudge - Online Judge.",
 		"</p>",
@@ -36,7 +38,6 @@ func (wi *WebInstance) writeHeader(w http.ResponseWriter, r *http.Request) {
 		"<tr height=\"20\">", "<td align=\"right\">",
 	)
 	cookie, _ := r.Cookie(AuthInfoCookie)
-	log.Println(cookie)
 	var User *User
 	User = nil
 
@@ -45,32 +46,30 @@ func (wi *WebInstance) writeHeader(w http.ResponseWriter, r *http.Request) {
 		SessionID := cookie.Value
 		wi.DBConnection.DB("myjudge").C("users").Find(bson.M{"lastsessionid": SessionID}).One(&User)
 
-		log.Println(User)
 		if User.LogoutDate.Before(expires) {
 			cookie.MaxAge = -1
 			cookie.Expires = User.LogoutDate
 			http.SetCookie(w, cookie)
 		}
 	}
-	log.Println(User)
 	if User == nil {
 		fmt.Fprint(w,
 			"<form action=\"/register/\">",
-			"<input type=\"submit\" value=\"Register\" style=\"height:18\">",
+			"<input type=\"submit\" value=\"Register\">",
 			"</form>",
 			"<form action=\"/login/\" method=\"post\">",
 			"Login:",
-			"<input type=\"text\" name=\"login\" value size=\"8\" style=\"height:18\">  &nbsp;",
+			"<input type=\"text\" name=\"login\" value size=\"8\">  &nbsp;",
 			"Password:",
-			"<input type=\"password\" name=\"password\" value size=\"8\" style=\"height:18\">  &nbsp;",
-			"<input type=\"submit\" value=\"Ok\" style=\"height:18\">",
+			"<input type=\"password\" name=\"password\" value size=\"8\">  &nbsp;",
+			"<input type=\"submit\" value=\"Ok\">",
 			"</form>",
 		)
 	} else {
 		fmt.Fprint(w, "You are logged in as <strong>", User.Name, "</strong>")
 		fmt.Fprint(w,
 			"<form action=\"/logout/\">",
-			"<input type=\"submit\" value=\"Logout\" style=\"height:18\">",
+			"<input type=\"submit\" value=\"Logout\">",
 			"</form>",
 		)
 	}
@@ -105,7 +104,7 @@ func (wi *WebInstance) loginHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		h := fnv.New64a()
 		h.Write([]byte(password))
-		hash := h.Sum64()
+		hash := int64(h.Sum64())
 		user := result[0]
 		if user.Password == hash {
 			//TODO: Write Cookie and redirect
@@ -121,24 +120,31 @@ func (wi *WebInstance) logoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 func (wi *WebInstance) registerHandler(w http.ResponseWriter, r *http.Request) {
 	wi.writeHeader(w, r)
+	r.ParseForm()
+	reason := r.PostFormValue("badreason")
+	log.Println("bad register: ", reason)
+	if reason != "" {
+		fmt.Fprintf(w, "<tr><td allign=\"center\"><font color=\"red\">%s</font></td></tr>", reason)
+	}
 
 	fmt.Fprint(w,
 		"<tr height=\"100"+"%\">", "<td align=\"center\">",
 		"<form action=\"/register/check/\" method=\"post\">",
 		"<table cellpadding=\"0\" cellspacing=\"10px\" border=\"0\">",
-		"<tr><td>Login:</td>",
-		"<td><input type=\"text\" name=\"login\" value size=\"20\"></td></tr><p>",
-		"<tr><td>Password:</td>",
-		"<td><input type=\"password\" name=\"password\" value size=\"20\"></td></tr><p>",
-		"<tr><td>Password check:</td>",
-		"<td><input type=\"password\" name=\"passwordcheck\" value size=\"20\"></td></tr><p>",
-		"<tr><td>Email:</td>",
-		"<td><input type=\"text\" name=\"email\" value size=\"20\"></td></tr><p>",
-		"<tr><td>Name:</td>",
+		"<tr><td>Login*:</td>",
+		"<td><input type=\"text\" name=\"login\" value size=\"20\" value=\"3+ symbols\"></td></tr><p>",
+		"<tr><td>Password*:</td>",
+		"<td><input type=\"password\" name=\"password\" value size=\"20\" value=\"6+ symbols\"></td></tr><p>",
+		"<tr><td>Password check*:</td>",
+		"<td><input type=\"password\" name=\"passwordcheck\" value size=\"20\" value=\"password again\"></td></tr><p>",
+		"<tr><td>Email*:</td>",
+		"<td><input type=\"text\" name=\"email\" value size=\"20\" value=\"@\"></td></tr><p>",
+		"<tr><td>Name*:</td>",
 		"<td><input type=\"text\" name=\"name\" value size=\"20\"></td></tr><p>",
 		"</table>",
 		"<input type=\"submit\" value=\"Ok\" style=\"height:18\"><p>",
 		"</form>",
+		"<font color=\"red\">* - require</font>",
 	)
 
 	fmt.Fprint(w, "</td></tr>")
@@ -146,11 +152,60 @@ func (wi *WebInstance) registerHandler(w http.ResponseWriter, r *http.Request) {
 	wi.writeFooter(w, r)
 }
 
+func (wi *WebInstance) registerCheckHandler(w http.ResponseWriter, r *http.Request) {
+	bad := func(reason string) {
+		r.PostForm.Add("badreason", reason)
+		http.Redirect(w, r, "/register", 301)
+	}
+
+	r.ParseForm()
+	login := r.PostFormValue("login")
+	password := r.PostFormValue("password")
+	passwordCheck := r.PostFormValue("passwordcheck")
+	email := r.PostFormValue("email")
+	name := r.PostFormValue("name")
+
+	users := wi.DBConnection.DB("myjudge").C("users")
+	result := []User{}
+
+	regexpEmail, _ := regexp.Compile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+	if len(login) <= 2 || len(password) < 6 || password != passwordCheck || !regexpEmail.MatchString(email) {
+		bad("Some fields filled with bad data...")
+		return
+	}
+
+	users.Find(bson.M{"login": login}).All(&result)
+	if len(result) != 0 {
+		bad("Login already used")
+		return
+	}
+
+	users.Find(bson.M{"email": email}).All(&result)
+	if len(result) != 0 {
+		bad("Email already used")
+		return
+	}
+
+	hasher := fnv.New64a()
+	hasher.Write([]byte(password))
+	PasswordHash := int64(hasher.Sum64())
+
+	newbie := &User{Login: login, Password: PasswordHash, Name: name, ID: bson.NewObjectId(), Email: email, LogoutDate: time.Now()}
+
+	err := users.Insert(newbie)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Fprint(w, "<head><meta http-equiv=\"refresh\" content=\"5;/\"></head>")
+	fmt.Fprint(w, `<body><font color="green">Registration successed</font><p>You will be automaticaly redirected to the main page in 5 seconds</body>`)
+}
+
 func (wi *WebInstance) init() {
 	http.HandleFunc("/", wi.rootHandler)
 	http.HandleFunc("/login/", wi.loginHandler)
 	http.HandleFunc("/logout/", wi.logoutHandler)
 	http.HandleFunc("/register/", wi.registerHandler)
+	http.HandleFunc("/register/check/", wi.registerCheckHandler)
 	log.Fatal(http.ListenAndServe(HTTPPORT, nil))
 }
 
