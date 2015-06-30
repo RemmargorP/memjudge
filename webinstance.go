@@ -29,19 +29,18 @@ type WebInstance struct {
 func (wi *WebInstance) writeHeader(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<html><title>%s</title><body>", TITLE)
 	fmt.Fprint(w, "",
-		"<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">",
-		"<tr>", "<td align=\"center\">",
-		"<p style=\"font-size:26px\">",
-		"MyJudge - Online Judge.",
-		"</p>",
-		"</td>", "</tr>",
-		"<tr height=\"20\">", "<td align=\"right\">",
+		`<table width="100%" cellpadding="0" cellspacing="0" border="0">`,
+		`<tr>`, `<td align="center">`,
+		`<p style="font-size:26px">`,
+		`MyJudge - Online Judge.`,
+		`</p>`,
+		`</td>`, `</tr>`,
+		`<tr height="20">`, `<td align="right">`,
 	)
-	cookie, _ := r.Cookie(AuthInfoCookie)
-	var User *User
-	User = nil
+	cookie, err := r.Cookie(AuthInfoCookie)
+	var User *User = nil
 
-	if cookie != nil {
+	if err != nil {
 		expires := cookie.Expires
 		SessionID := cookie.Value
 		wi.DBConnection.DB("myjudge").C("users").Find(bson.M{"lastsessionid": SessionID}).One(&User)
@@ -54,31 +53,31 @@ func (wi *WebInstance) writeHeader(w http.ResponseWriter, r *http.Request) {
 	}
 	if User == nil {
 		fmt.Fprint(w,
-			"<form action=\"/register/\">",
-			"<input type=\"submit\" value=\"Register\">",
-			"</form>",
-			"<form action=\"/login/\" method=\"post\">",
-			"Login:",
-			"<input type=\"text\" name=\"login\" value size=\"8\">  &nbsp;",
-			"Password:",
-			"<input type=\"password\" name=\"password\" value size=\"8\">  &nbsp;",
-			"<input type=\"submit\" value=\"Ok\">",
-			"</form>",
+			`<form action="/register/">`,
+			`<input type="submit" value="Register">`,
+			`</form>`,
+			`<form action="/login/" method="post">`,
+			`Login:`,
+			`<input type="text" name="login" value size="8">  &nbsp;`,
+			`Password:`,
+			`<input type="password" name="password" value size="8">  &nbsp;`,
+			`<input type="submit" value="Ok">`,
+			`</form>`,
 		)
 	} else {
 		fmt.Fprint(w, "You are logged in as <strong>", User.Name, "</strong>")
 		fmt.Fprint(w,
-			"<form action=\"/logout/\">",
-			"<input type=\"submit\" value=\"Logout\">",
-			"</form>",
+			`<form action="/logout/">`,
+			`<input type="submit" value="Logout">`,
+			`</form>`,
 		)
 	}
 
-	fmt.Fprint(w, "</td>", "</tr>")
+	fmt.Fprint(w, `</td>`, `</tr>`)
 }
 func (wi *WebInstance) writeFooter(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "</table>")
-	fmt.Fprint(w, "</body></html>")
+	fmt.Fprint(w, `</table>`)
+	fmt.Fprint(w, `</body></html>`)
 }
 
 func (wi *WebInstance) rootHandler(w http.ResponseWriter, r *http.Request) {
@@ -99,7 +98,7 @@ func (wi *WebInstance) loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if len(result) == 0 {
 		//Unknown login - redirect to /
-		fmt.Fprint(w, "<head><meta http-equiv=\"refresh\" content=\"0;/\"></head>")
+		fmt.Fprint(w, `<head><meta http-equiv="refresh" content="0;/"></head>`)
 		return
 	} else {
 		h := fnv.New64a()
@@ -110,52 +109,68 @@ func (wi *WebInstance) loginHandler(w http.ResponseWriter, r *http.Request) {
 			//TODO: Write Cookie and redirect
 		} else {
 			//Incorrect password - redirect to /
-			fmt.Fprint(w, "<head><meta http-equiv=\"refresh\" content=\"0;/\"></head>")
+			fmt.Fprint(w, `<head><meta http-equiv="refresh" content="0;/"></head>`)
 		}
 	}
 }
 func (wi *WebInstance) logoutHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "<head><meta http-equiv=\"refresh\" content=\"0;/\"></head>")
+	fmt.Fprint(w, `<head><meta http-equiv="refresh" content="0;/"></head>`)
 	http.SetCookie(w, &http.Cookie{Name: AuthInfoCookie, MaxAge: -1})
 }
 func (wi *WebInstance) registerHandler(w http.ResponseWriter, r *http.Request) {
-	wi.writeHeader(w, r)
 	r.ParseForm()
-	reason := r.PostFormValue("badreason")
-	log.Println("bad register: ", reason)
-	if reason != "" {
-		fmt.Fprintf(w, "<tr><td allign=\"center\"><font color=\"red\">%s</font></td></tr>", reason)
+	reasonCookie, err := r.Cookie("badreason")
+	var reason string
+
+	if err == nil {
+		reason = reasonCookie.Value
+		reasonCookie.Path = "/"
+		reasonCookie.Value = ""
+		http.SetCookie(w, reasonCookie)
 	}
 
-	fmt.Fprint(w,
-		"<tr height=\"100"+"%\">", "<td align=\"center\">",
-		"<form action=\"/register/check/\" method=\"post\">",
-		"<table cellpadding=\"0\" cellspacing=\"10px\" border=\"0\">",
-		"<tr><td>Login*:</td>",
-		"<td><input type=\"text\" name=\"login\" value size=\"20\" value=\"3+ symbols\"></td></tr><p>",
-		"<tr><td>Password*:</td>",
-		"<td><input type=\"password\" name=\"password\" value size=\"20\" value=\"6+ symbols\"></td></tr><p>",
-		"<tr><td>Password check*:</td>",
-		"<td><input type=\"password\" name=\"passwordcheck\" value size=\"20\" value=\"password again\"></td></tr><p>",
-		"<tr><td>Email*:</td>",
-		"<td><input type=\"text\" name=\"email\" value size=\"20\" value=\"@\"></td></tr><p>",
-		"<tr><td>Name*:</td>",
-		"<td><input type=\"text\" name=\"name\" value size=\"20\"></td></tr><p>",
-		"</table>",
-		"<input type=\"submit\" value=\"Ok\" style=\"height:18\"><p>",
-		"</form>",
-		"<font color=\"red\">* - require</font>",
+	wi.writeHeader(w, r)
+	if reason != "" {
+		fmt.Fprintf(w, `<tr><td align="center"><font color="red"><strong>%s</strong></font></td></tr>`, reason)
+	}
+
+	fmt.Fprint(w, "",
+		`<tr height="100"+"%">`, `<td align="center">`,
+		`<form action="/register/check/" method="post">`,
+		`<table cellpadding="0" cellspacing="10px" border="0">`,
+		`<tr><td>Login*:</td>`,
+		`<td><input type="text" name="login" size="20"></td><td>3+ symbols</td></tr><p>`,
+		`<tr><td>Password*:</td>`,
+		`<td><input type="password" name="password" size="20"></td><td>6+ symbols</td></tr><p>`,
+		`<tr><td>Password check*:</td>`,
+		`<td><input type="password" name="passwordcheck" size="20"></td><td>password again</td></tr><p>`,
+		`<tr><td>Email*:</td>`,
+		`<td><input type="text" name="email" size="20"></td><td>Email example@domain.com</td></tr><p>`,
+		`<tr><td>Name:</td>`,
+		`<td><input type="text" name="name" size="20"></td></tr><p>`,
+		`</table>`,
+		`<input type="submit" value="Ok"><p>`,
+		`</form>`,
+		`<font color="red">* - require</font>`,
 	)
 
-	fmt.Fprint(w, "</td></tr>")
+	fmt.Fprint(w, `</td></tr>`)
 
 	wi.writeFooter(w, r)
 }
 
 func (wi *WebInstance) registerCheckHandler(w http.ResponseWriter, r *http.Request) {
 	bad := func(reason string) {
-		r.PostForm.Add("badreason", reason)
-		http.Redirect(w, r, "/register", 301)
+		cookie := http.Cookie{}
+		//cookie.MaxAge = 3600
+		cookie.Expires = time.Now().AddDate(0, 0, 1)
+		cookie.Value = reason
+		cookie.Name = "badreason"
+		cookie.Path = "/"
+		http.SetCookie(w, &cookie)
+
+		http.Redirect(w, r, "/register", http.StatusFound)
+		//fmt.Fprint(w, `<head><meta http-equiv="refresh" content="0;/register"></head>`)
 	}
 
 	r.ParseForm()
@@ -196,7 +211,7 @@ func (wi *WebInstance) registerCheckHandler(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Fprint(w, "<head><meta http-equiv=\"refresh\" content=\"5;/\"></head>")
+	fmt.Fprint(w, `<head><meta http-equiv="refresh" content="5;/"></head>`)
 	fmt.Fprint(w, `<body><font color="green">Registration successed</font><p>You will be automaticaly redirected to the main page in 5 seconds</body>`)
 }
 
