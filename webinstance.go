@@ -30,22 +30,21 @@ func (wi *WebInstance) writeHeader(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<html><title>%s</title><body>", TITLE)
 	fmt.Fprint(w, "",
 		`<table width="100%" cellpadding="0" cellspacing="0" border="0">`,
-		`<tr>`, `<td align="center">`,
+		`<tr>`, `<td align="center" colspan="2">`,
 		`<p style="font-size:26px">`,
 		`MyJudge - Online Judge.`,
 		`</p>`,
 		`</td>`, `</tr>`,
-		`<tr height="20">`, `<td align="right">`,
+		`<tr>`,
 	)
 	cookie, err := r.Cookie(AuthInfoCookie)
-	var User *User = nil
+	var User *User
 
-	if err != nil {
-		expires := cookie.Expires
+	if err == nil {
 		SessionID := cookie.Value
 		wi.DBConnection.DB("myjudge").C("users").Find(bson.M{"lastsessionid": SessionID}).One(&User)
 
-		if User.LogoutDate.Before(expires) {
+		if User != nil && User.LogoutDate.Before(time.Now()) {
 			cookie.MaxAge = -1
 			cookie.Expires = User.LogoutDate
 			http.SetCookie(w, cookie)
@@ -53,9 +52,12 @@ func (wi *WebInstance) writeHeader(w http.ResponseWriter, r *http.Request) {
 	}
 	if User == nil {
 		fmt.Fprint(w,
-			`<form action="/register/">`,
+			`<td align="left">`,
+			`<form action="/register/" allign="left">`,
 			`<input type="submit" value="Register">`,
 			`</form>`,
+			`</td>`,
+			`<td align="right">`,
 			`<form action="/login/" method="post">`,
 			`Login:`,
 			`<input type="text" name="login" value size="8">  &nbsp;`,
@@ -63,17 +65,20 @@ func (wi *WebInstance) writeHeader(w http.ResponseWriter, r *http.Request) {
 			`<input type="password" name="password" value size="8">  &nbsp;`,
 			`<input type="submit" value="Ok">`,
 			`</form>`,
+			`</td>`,
 		)
 	} else {
-		fmt.Fprint(w, "You are logged in as <strong>", User.Name, "</strong>")
-		fmt.Fprint(w,
+		fmt.Fprint(w, `<td align="right">`,
 			`<form action="/logout/">`,
+			`You are logged in as <strong>`, User.Name, `</strong>&nbsp;&nbsp;&nbsp;`,
 			`<input type="submit" value="Logout">`,
 			`</form>`,
+			`</td>`,
 		)
 	}
 
-	fmt.Fprint(w, `</td>`, `</tr>`)
+	fmt.Fprint(w, `</tr>`)
+	fmt.Fprint(w, `<tr><td colspan="2"><hr><td></tr>`)
 }
 func (wi *WebInstance) writeFooter(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</table>`)
@@ -86,10 +91,11 @@ func (wi *WebInstance) rootHandler(w http.ResponseWriter, r *http.Request) {
 	wi.writeFooter(w, r)
 }
 func (wi *WebInstance) loginHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
 	val := r.PostForm
 	login := val.Get("login")
 	password := val.Get("password")
-
+	log.Println("User wanna log in: ", login)
 	Collection := wi.DBConnection.DB("myjudge").C("users")
 
 	result := []User{}
@@ -97,25 +103,48 @@ func (wi *WebInstance) loginHandler(w http.ResponseWriter, r *http.Request) {
 	Collection.Find(bson.M{"login": login}).All(&result)
 
 	if len(result) == 0 {
+		log.Println("Not found dat login in da DB")
 		//Unknown login - redirect to /
 		fmt.Fprint(w, `<head><meta http-equiv="refresh" content="0;/"></head>`)
 		return
+	} // else
+	log.Println("Found dat login in da DB")
+	h := fnv.New64a()
+	h.Write([]byte(password))
+	hash := int64(h.Sum64())
+	user := result[0]
+	if user.Password == hash {
+		log.Println("You don't wanna watch my docs!")
+		Session := GenerateSessionID()
+		cookie := http.Cookie{}
+		cookie.Name = AuthInfoCookie
+		cookie.Path = "/"
+		cookie.Expires = time.Now().AddDate(0, 0, 7)
+		cookie.Value = Session
+		cookie.HttpOnly = true
+
+		http.SetCookie(w, &cookie)
+
+		user.LastSessionDate = time.Now()
+		user.LastSessionID = Session
+		log.Println("New SessionID: ", Session)
+		Collection.Update(bson.M{"login": user.Login}, user)
 	} else {
-		h := fnv.New64a()
-		h.Write([]byte(password))
-		hash := int64(h.Sum64())
-		user := result[0]
-		if user.Password == hash {
-			//TODO: Write Cookie and redirect
-		} else {
-			//Incorrect password - redirect to /
-			fmt.Fprint(w, `<head><meta http-equiv="refresh" content="0;/"></head>`)
-		}
+		log.Println("Bad password :C")
 	}
+	//Incorrect password - redirect to /
+	fmt.Fprint(w, `<head><meta http-equiv="refresh" content="0;/"></head>`)
+
 }
 func (wi *WebInstance) logoutHandler(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie(AuthInfoCookie)
+	if err != nil {
+		return
+	}
+	cookie.Path = "/"
+	cookie.Expires = time.Now().AddDate(0, 0, -1)
+	http.SetCookie(w, cookie)
 	fmt.Fprint(w, `<head><meta http-equiv="refresh" content="0;/"></head>`)
-	http.SetCookie(w, &http.Cookie{Name: AuthInfoCookie, MaxAge: -1})
 }
 func (wi *WebInstance) registerHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
