@@ -2,14 +2,14 @@ package myjudge
 
 import (
 	"fmt"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 	"hash/fnv"
+	"html/template"
 	"log"
 	"net/http"
 	"regexp"
 	"time"
-
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 )
 
 const (
@@ -27,16 +27,27 @@ type WebInstance struct {
 }
 
 func (wi *WebInstance) writeHeader(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "<html><title>%s</title><body>", TITLE)
-	fmt.Fprint(w, "",
-		`<table width="100%" cellpadding="0" cellspacing="0" border="0">`,
-		`<tr>`, `<td align="center" colspan="2">`,
-		`<p style="font-size:26px">`,
-		`MyJudge - Online Judge.`,
-		`</p>`,
-		`</td>`, `</tr>`,
-		`<tr>`,
-	)
+	Header, _ := getPage("header.html")
+	Header.Data["TITLE"] = TITLE
+	Header.Data["HeaderTitle"] = "MyJudge - Online Judge."
+
+	tmp, _ := template.New("").Parse(Header.Page)
+
+	badReasonCookie, err := r.Cookie("badreason")
+	var badReason string
+
+	if err == nil {
+		badReason = badReasonCookie.Value
+		badReasonCookie.Path = "/"
+		badReasonCookie.Value = ""
+		badReasonCookie.Expires = time.Now().AddDate(0, 0, -1)
+		http.SetCookie(w, badReasonCookie)
+	}
+
+	if badReason != "" {
+		Header.Data["BadReason"] = badReason
+	}
+
 	cookie, err := r.Cookie(AuthInfoCookie)
 	var User *User
 
@@ -45,49 +56,27 @@ func (wi *WebInstance) writeHeader(w http.ResponseWriter, r *http.Request) {
 		wi.DBConnection.DB("myjudge").C("users").Find(bson.M{"lastsessionid": SessionID}).One(&User)
 
 		if User != nil && User.LogoutDate.Before(time.Now()) {
-			cookie.MaxAge = -1
+			cookie.Value = ""
 			cookie.Expires = User.LogoutDate
 			http.SetCookie(w, cookie)
+			User = nil
 		}
 	}
-	if User == nil {
-		fmt.Fprint(w,
-			`<td align="left">`,
-			`<form action="/register/" allign="left">`,
-			`<input type="submit" value="Register">`,
-			`</form>`,
-			`</td>`,
-			`<td align="right">`,
-			`<form action="/login/" method="post">`,
-			`Login:`,
-			`<input type="text" name="login" value size="8">  &nbsp;`,
-			`Password:`,
-			`<input type="password" name="password" value size="8">  &nbsp;`,
-			`<input type="submit" value="Ok">`,
-			`</form>`,
-			`</td>`,
-		)
-	} else {
-		fmt.Fprint(w, `<td align="right">`,
-			`<form action="/logout/">`,
-			`You are logged in as <strong>`, User.Name, `</strong>&nbsp;&nbsp;&nbsp;`,
-			`<input type="submit" value="Logout">`,
-			`</form>`,
-			`</td>`,
-		)
+	if User != nil {
+		Header.Data["isUserLoggined"] = true
+		Header.Data["User"] = User
 	}
-
-	fmt.Fprint(w, `</tr>`)
-	fmt.Fprint(w, `<tr><td colspan="2"><hr><td></tr>`)
+	tmp.Execute(w, Header.Data)
 }
 func (wi *WebInstance) writeFooter(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, `</table>`)
-	fmt.Fprint(w, `</body></html>`)
+	WP, _ := getPage("footer.html")
+	tmp, _ := template.New("").Parse(WP.Page)
+
+	tmp.Execute(w, WP.Data)
 }
 
 func (wi *WebInstance) rootHandler(w http.ResponseWriter, r *http.Request) {
 	wi.writeHeader(w, r)
-
 	wi.writeFooter(w, r)
 }
 func (wi *WebInstance) loginHandler(w http.ResponseWriter, r *http.Request) {
@@ -95,26 +84,25 @@ func (wi *WebInstance) loginHandler(w http.ResponseWriter, r *http.Request) {
 	val := r.PostForm
 	login := val.Get("login")
 	password := val.Get("password")
-	log.Println("User wanna log in: ", login)
+
 	Collection := wi.DBConnection.DB("myjudge").C("users")
 
 	result := []User{}
 
 	Collection.Find(bson.M{"login": login}).All(&result)
 
-	if len(result) == 0 {
-		log.Println("Not found dat login in da DB")
-		//Unknown login - redirect to /
+	if len(result) == 0 { //Login not found
 		fmt.Fprint(w, `<head><meta http-equiv="refresh" content="0;/"></head>`)
 		return
-	} // else
-	log.Println("Found dat login in da DB")
-	h := fnv.New64a()
+	}
+
+	h := fnv.New64a() //password hasher
 	h.Write([]byte(password))
 	hash := int64(h.Sum64())
+
 	user := result[0]
 	if user.Password == hash {
-		log.Println("You don't wanna watch my docs!")
+
 		Session := GenerateSessionID()
 		cookie := http.Cookie{}
 		cookie.Name = AuthInfoCookie
@@ -127,15 +115,14 @@ func (wi *WebInstance) loginHandler(w http.ResponseWriter, r *http.Request) {
 
 		user.LastSessionDate = time.Now()
 		user.LastSessionID = Session
-		log.Println("New SessionID: ", Session)
-		Collection.Update(bson.M{"login": user.Login}, user)
-	} else {
-		log.Println("Bad password :C")
-	}
-	//Incorrect password - redirect to /
-	fmt.Fprint(w, `<head><meta http-equiv="refresh" content="0;/"></head>`)
+		user.LogoutDate = time.Now().AddDate(0, 0, 7)
 
+		Collection.Update(bson.M{"login": user.Login}, user)
+	}
+
+	fmt.Fprint(w, `<head><meta http-equiv="refresh" content="0;/"></head>`)
 }
+
 func (wi *WebInstance) logoutHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(AuthInfoCookie)
 	if err != nil {
@@ -147,43 +134,16 @@ func (wi *WebInstance) logoutHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<head><meta http-equiv="refresh" content="0;/"></head>`)
 }
 func (wi *WebInstance) registerHandler(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-	reasonCookie, err := r.Cookie("badreason")
-	var reason string
-
-	if err == nil {
-		reason = reasonCookie.Value
-		reasonCookie.Path = "/"
-		reasonCookie.Value = ""
-		http.SetCookie(w, reasonCookie)
-	}
-
 	wi.writeHeader(w, r)
-	if reason != "" {
-		fmt.Fprintf(w, `<tr><td align="center"><font color="red"><strong>%s</strong></font></td></tr>`, reason)
+	r.ParseForm()
+
+	WP, _ := getPage("forms/register.html")
+	log.Println(WP.Page)
+	templ, err := template.New("").Parse(WP.Page)
+	if err != nil {
+		log.Println(err)
 	}
-
-	fmt.Fprint(w, "",
-		`<tr height="100"+"%">`, `<td align="center">`,
-		`<form action="/register/check/" method="post">`,
-		`<table cellpadding="0" cellspacing="10px" border="0">`,
-		`<tr><td>Login*:</td>`,
-		`<td><input type="text" name="login" size="20"></td><td>3+ symbols</td></tr><p>`,
-		`<tr><td>Password*:</td>`,
-		`<td><input type="password" name="password" size="20"></td><td>6+ symbols</td></tr><p>`,
-		`<tr><td>Password check*:</td>`,
-		`<td><input type="password" name="passwordcheck" size="20"></td><td>password again</td></tr><p>`,
-		`<tr><td>Email*:</td>`,
-		`<td><input type="text" name="email" size="20"></td><td>Email example@domain.com</td></tr><p>`,
-		`<tr><td>Name:</td>`,
-		`<td><input type="text" name="name" size="20"></td></tr><p>`,
-		`</table>`,
-		`<input type="submit" value="Ok"><p>`,
-		`</form>`,
-		`<font color="red">* - require</font>`,
-	)
-
-	fmt.Fprint(w, `</td></tr>`)
+	templ.Execute(w, WP.Data)
 
 	wi.writeFooter(w, r)
 }
@@ -191,7 +151,6 @@ func (wi *WebInstance) registerHandler(w http.ResponseWriter, r *http.Request) {
 func (wi *WebInstance) registerCheckHandler(w http.ResponseWriter, r *http.Request) {
 	bad := func(reason string) {
 		cookie := http.Cookie{}
-		//cookie.MaxAge = 3600
 		cookie.Expires = time.Now().AddDate(0, 0, 1)
 		cookie.Value = reason
 		cookie.Name = "badreason"
@@ -199,7 +158,6 @@ func (wi *WebInstance) registerCheckHandler(w http.ResponseWriter, r *http.Reque
 		http.SetCookie(w, &cookie)
 
 		http.Redirect(w, r, "/register", http.StatusFound)
-		//fmt.Fprint(w, `<head><meta http-equiv="refresh" content="0;/register"></head>`)
 	}
 
 	r.ParseForm()
