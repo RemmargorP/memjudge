@@ -31,7 +31,7 @@ func (wi *WebInstance) writeHeader(w http.ResponseWriter, r *http.Request) {
 	Header.Data["TITLE"] = TITLE
 	Header.Data["HeaderTitle"] = "MyJudge - Online Judge."
 
-	tmp, _ := template.New("").Parse(Header.Page)
+	tmp, _ := template.New("header").Parse(Header.Page)
 
 	badReasonCookie, err := r.Cookie("badreason")
 	var badReason string
@@ -70,7 +70,7 @@ func (wi *WebInstance) writeHeader(w http.ResponseWriter, r *http.Request) {
 }
 func (wi *WebInstance) writeFooter(w http.ResponseWriter, r *http.Request) {
 	WP, _ := getPage("footer.html")
-	tmp, _ := template.New("").Parse(WP.Page)
+	tmp, _ := template.New("footer").Parse(WP.Page)
 
 	tmp.Execute(w, WP.Data)
 }
@@ -138,13 +138,16 @@ func (wi *WebInstance) registerHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
 	WP, _ := getPage("forms/register.html")
-	log.Println(WP.Page)
-	templ, err := template.New("").Parse(WP.Page)
+
+	templ, err := template.New("register").Parse(WP.Page)
 	if err != nil {
 		log.Println(err)
 	}
-	templ.Execute(w, WP.Data)
 
+	err = templ.Execute(w, WP.Data)
+	if err != nil {
+		log.Println(err)
+	}
 	wi.writeFooter(w, r)
 }
 
