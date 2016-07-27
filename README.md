@@ -1,6 +1,3 @@
-# myjudge
-Online Judge
+# MemJudge
 
-All html & css code will be inside source code for now
-
-PS sorry for my english :/
+Online Judge for Competitive Programming. And Memes
