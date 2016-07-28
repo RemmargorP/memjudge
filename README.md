@@ -36,7 +36,7 @@ Online Judge for Competitive Programming Contests. And Memes
 ###MongoDB Collections###
 1. users:
   * Example:
-  ```
+  ```json
   {
       '_id': {
         'login': ...,
@@ -56,7 +56,7 @@ Online Judge for Competitive Programming Contests. And Memes
 
 2. contests:
   * Example:
-  ```
+  ```json
   {
     'id': {
       'owners': [Rights],
@@ -74,7 +74,7 @@ Online Judge for Competitive Programming Contests. And Memes
   ```
 3. problems:
   * Example:
-  ```
+  ```json
   {
     'id': {
       'owners': [Rights],
@@ -95,7 +95,7 @@ Online Judge for Competitive Programming Contests. And Memes
   ```
 4. solutions:
   * Example:
-  ```
+  ```json
   {
     'id': {
       'owner': user id,
@@ -109,7 +109,7 @@ Online Judge for Competitive Programming Contests. And Memes
 5. testing_queue
 
 ####Utility Classes####
-```
+```json
 'Rights':
 {
   'owner': user id,
@@ -118,7 +118,7 @@ Online Judge for Competitive Programming Contests. And Memes
   'setRights': true/false
 }
 ```
-```
+```json
 'Test':
 {
   'problem': problem id,
@@ -132,7 +132,7 @@ Online Judge for Competitive Programming Contests. And Memes
 }
 # TODO add limits
 ```
-```
+```json
 'TestingResult' :
 {
   'status': (Queued/Compiling/Compilation Error/Running/(OK|Accepted)/Time Limit Exceeded/Memory Limit Exceeded/Runtime Error/Wrong Answer/Security Violation/...)
