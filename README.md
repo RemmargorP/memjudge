@@ -3,9 +3,6 @@
 
 Online Judge for Competitive Programming Contests. And Memes
 
-----------
-
-
 ##**Structure**##
 1. Front End:
   * JavaScript:
@@ -27,16 +24,12 @@ Online Judge for Competitive Programming Contests. And Memes
     * Testing Queue
     * Contests
 
-
-----------
-
-
 ##**Database Structure**##
 
 ###MongoDB Collections###
 1. users:
   * Example:
-  ```json
+  ```js
   {
       '_id': {
         'login': ...,
@@ -56,7 +49,7 @@ Online Judge for Competitive Programming Contests. And Memes
 
 2. contests:
   * Example:
-  ```json
+  ```js
   {
     'id': {
       'owners': [Rights],
@@ -74,7 +67,7 @@ Online Judge for Competitive Programming Contests. And Memes
   ```
 3. problems:
   * Example:
-  ```json
+  ```js
   {
     'id': {
       'owners': [Rights],
@@ -95,7 +88,7 @@ Online Judge for Competitive Programming Contests. And Memes
   ```
 4. solutions:
   * Example:
-  ```json
+  ```js
   {
     'id': {
       'owner': user id,
@@ -109,7 +102,7 @@ Online Judge for Competitive Programming Contests. And Memes
 5. testing_queue
 
 ####Utility Classes####
-```json
+```js
 'Rights':
 {
   'owner': user id,
@@ -118,7 +111,7 @@ Online Judge for Competitive Programming Contests. And Memes
   'setRights': true/false
 }
 ```
-```json
+```js
 'Test':
 {
   'problem': problem id,
@@ -132,7 +125,7 @@ Online Judge for Competitive Programming Contests. And Memes
 }
 # TODO add limits
 ```
-```json
+```js
 'TestingResult' :
 {
   'status': (Queued/Compiling/Compilation Error/Running/(OK|Accepted)/Time Limit Exceeded/Memory Limit Exceeded/Runtime Error/Wrong Answer/Security Violation/...)
@@ -141,14 +134,9 @@ Online Judge for Competitive Programming Contests. And Memes
 }
 ```
 
-----------
-
-
 ##**TODO**##
 ### What about... ###
 1. Move Testing Queue to another DB (like **MemCached**, **Redis**, etc.)
 2. Move main DB from **MongoDB** to **MySQL**, ...
 3. Decide which language to use for testing solutions **(Python / Golang / C++ / Java)**
 4. Add **Polygon** Integration
-
-----------
