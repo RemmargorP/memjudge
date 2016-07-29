@@ -140,3 +140,4 @@ Online Judge for Competitive Programming Contests. And Memes
 2. Move main DB from **MongoDB** to **MySQL**, ...
 3. Decide which language to use for testing solutions **(Python / Golang / C++ / Java)**
 4. Add **Polygon** Integration
+5. Better daemon controller (control/control)

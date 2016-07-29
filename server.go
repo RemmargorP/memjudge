@@ -3,6 +3,8 @@ package memjudge
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/RemmargorP/memjudge/web_handlers"
+	"github.com/gorilla/sessions"
 	"gopkg.in/mgo.v2"
 	"io/ioutil"
 	"log"
@@ -50,10 +52,11 @@ func (s *Server) init() {
 	}
 
 	var db_auth struct {
-		Url  string
-		DB   string
-		User string
-		Pass string
+		Url             string
+		DB              string
+		User            string
+		Pass            string
+		CookieStoreSalt string
 	}
 	err = json.Unmarshal(db_auth_json, &db_auth)
 	if err != nil {
@@ -87,14 +90,16 @@ func (s *Server) init() {
 	for i := 0; i < s.Config.NumJudges; i++ {
 		routine := &Judge{}
 		stop := make(chan interface{}, 1)
-		go routine.Start(stop)
+		go routine.Start(stop, s.DB)
 		s.Judges[s.lastThreadID] = stop
 		s.lastThreadID += 1
 	}
+
+	cookieStore := sessions.NewCookieStore([]byte(db_auth.CookieStoreSalt))
 	for i := 0; i < s.Config.NumWebInstances; i++ {
-		routine := &WebInstance{}
+		routine := &memjudgeweb.WebInstance{}
 		stop := make(chan interface{}, 1)
-		go routine.Start(stop)
+		go routine.Start(stop, s.DB, cookieStore)
 		s.WebInstances[s.lastThreadID] = stop
 		s.lastThreadID += 1
 	}
