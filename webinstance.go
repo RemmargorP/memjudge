@@ -1,4 +1,4 @@
-package myjudge
+package memjudge
 
 import (
 	"fmt"
@@ -13,17 +13,15 @@ import (
 )
 
 const (
-	HTTPPORT        = ":8080"
-	TITLE           = "Online Judge"
-	PublicDir       = "/var/www/myjudge/public/"
-	MONGODBUSER     = "myjudge"
-	MONGODBPASSWORD = ""
-	AuthInfoCookie  = "authinfo"
+	HTTPPORT       = ":8080"
+	TITLE          = "MemJudge"
+	PublicDir      = "/var/www/memjudge/public/"
+	AuthInfoCookie = "authinfo"
 )
 
 type WebInstance struct {
-	Submits      chan SubmitionProtocol
-	DBConnection *mgo.Session
+	DB   *mgo.Session
+	Stop <-chan interface{}
 }
 
 func (wi *WebInstance) writeHeader(w http.ResponseWriter, r *http.Request) {
@@ -214,16 +212,16 @@ func (wi *WebInstance) init() {
 	log.Fatal(http.ListenAndServe(HTTPPORT, nil))
 }
 
-func (wi *WebInstance) Start(submits chan SubmitionProtocol) {
-	var err error
-	wi.Submits = submits
+func (wi *WebInstance) Start(stop <-chan interface{}) {
+	//var err error
+	wi.Stop = stop
 
-	wi.DBConnection, err = mgo.Dial("mongodb://localhost/myjudge")
+	/*wi.DBConnection, err = mgo.Dial("mongodb://localhost/myjudge")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer wi.DBConnection.Close()
 	wi.DBConnection.SetSafe(&mgo.Safe{})
 
-	wi.init()
+	wi.init()*/
 }

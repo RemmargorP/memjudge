@@ -1,4 +1,4 @@
-package myjudge
+package memjudge
 
 import (
 	"io/ioutil"

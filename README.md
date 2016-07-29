@@ -31,19 +31,19 @@ Online Judge for Competitive Programming Contests. And Memes
   * Example:
   ```js
   {
-      '_id': {
-        'login': ...,
-        'passwordHash': ...,
-        'nickname': ...,
-        'email': ...,
-        'name': ...,
-        'surname': ...,
-        'address': ..., #and other (index, ...)
-      'solutions': [ids],
-      'contests': [ids],
+    "_id": {
+      "login": ...,
+      "passwordHash": ...,
+      "nickname": ...,
+      "email": ...,
+      "name": ...,
+      "surname": ...,
+      "address": ..., #and other (index, ...)
+      "solutions": [ids],
+      "contests": [ids],
       ... #TODO (Polygon auth info)
-      },
-      ...
+    },
+    ...
   }
   ```
 
@@ -51,15 +51,15 @@ Online Judge for Competitive Programming Contests. And Memes
   * Example:
   ```js
   {
-    'id': {
-      'owners': [Rights],
-      'authors': [user ids],
-      'registeredUsers': [user ids],
-      'problems': [ids],
-      'startDate': date,
-      'endDate': date,
-      'private': true/false,
-      'scoring': [len(problems), ranking system],
+    "id": {
+      "owners": [Rights],
+      "authors": [user ids],
+      "registeredUsers": [user ids],
+      "problems": [ids],
+      "startDate": date,
+      "endDate": date,
+      "private": true/false,
+      "scoring": [len(problems), ranking system],
       # TODO Ranking System
     },
     ...
@@ -69,33 +69,32 @@ Online Judge for Competitive Programming Contests. And Memes
   * Example:
   ```js
   {
-    'id': {
-      'owners': [Rights],
-      'authors': [user ids],
-      'name': ...,
-      'statement': ...,
-      'tests': [Tests],
-      'inputType': stdin/file name (if not interactive),
-      'outputType': stdout/file name (if not interactive),
-      'checker': checker file, # TODO specification
-      'type': standard/interactive,
+    "id": {
+      "owners": [Rights],
+      "authors": [user ids],
+      "name": ...,
+      "statement": ...,
+      "tests": [Tests],
+      "inputType": stdin/file name (if not interactive),
+      "outputType": stdout/file name (if not interactive),
+      "checker": checker file, # TODO specification
+      "type": standard/interactive,
       
-      'polygonId': ..., #TODO
+      "polygonId": ..., #TODO
     },
     ...
-  
   }
   ```
 4. solutions:
   * Example:
   ```js
   {
-    'id': {
-      'owner': user id,
-      'problem': problem id,
-      'testingTesult': TestingResult,
-      'timestamp': date,
-      
+    "id": {
+      "owner": user id,
+      "problem": problem id,
+      "testingTesult": TestingResult,
+      "timestamp": date,
+    
     }
   }
   ```
@@ -103,34 +102,35 @@ Online Judge for Competitive Programming Contests. And Memes
 
 ####Utility Classes####
 ```js
-'Rights':
+"Rights":
 {
-  'owner': user id,
-  'read': true/false,
-  'write': true/false,
-  'setRights': true/false
+  "owner": user id,
+  "read": true/false,
+  "write": true/false,
+  "setRights": true/false
 }
 ```
 ```js
-'Test':
+"Test":
 {
-  'problem': problem id,
-  'input': ...,
-  'inputShort': first 1024 symbols of input,
-  'output': ...,
-  'outputShort': first 1024 symbols of output,
-  'timeConsumed': float,
-  'memoryUsed': bytes,
-  'reason': does not exist | reason of verdict;
+  "problem": problem id,
+  "input": ...,
+  "inputShort": first 1024 symbols of input,
+  "output": ...,
+  "outputShort": first 1024 symbols of output,
+  "timeLimit": float (seconds),
+  "memoryLimit": bytes,
+  "timeElapsed": float,
+  "memoryUsed": bytes,
+  "reason": does not exist | reason of verdict
 }
-# TODO add limits
 ```
 ```js
-'TestingResult' :
+"TestingResult" :
 {
-  'status': (Queued/Compiling/Compilation Error/Running/(OK|Accepted)/Time Limit Exceeded/Memory Limit Exceeded/Runtime Error/Wrong Answer/Security Violation/...)
-  'tests': [Test],
-  'invokerId': id,
+  "status": (Queued/Compiling/Compilation Error/Running/(OK|Accepted)/Time Limit Exceeded/Memory Limit Exceeded/Runtime Error/Wrong Answer/Security Violation/...)
+  "tests": [Test],
+  "invokerId": id,
 }
 ```
 

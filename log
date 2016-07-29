@@ -1,3 +1,1 @@
-2015/08/15 13:52:44 html/template:register: "\"" in attribute name: "+\"%\">\n    <td align=\"center\">\n  "
-2015/08/15 13:52:45 html/template:register: "\"" in attribute name: "+\"%\">\n    <td align=\"center\">\n  "
-2015/08/15 13:52:46 html/template:register: "\"" in attribute name: "+\"%\">\n    <td align=\"center\">\n  "
+2016/07/29 12:35:39 invalid character '\x00' after top-level value

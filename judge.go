@@ -1,8 +1,8 @@
-package myjudge
+package memjudge
 
 type Judge struct {
 }
 
-func (j *Judge) Start(submits chan SubmitionProtocol) {
+func (j *Judge) Start(stop <-chan interface{}) {
 
 }

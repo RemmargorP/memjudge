@@ -1,68 +1,102 @@
-package myjudge
+package memjudge
 
 import (
+	"encoding/json"
 	"fmt"
+	"gopkg.in/mgo.v2"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"runtime"
 	"time"
-
-	"gopkg.in/mgo.v2/bson"
 )
 
-type SubmitionProtocol struct {
-	Id     bson.ObjectId
-	Data   string
-	Result int
-}
-
 const MasterPort = ":45100"
-const packetBufferSize = 100
 
 type ServerConfig struct {
-	numGoRoutines   int
-	numJudges       int
-	numWebInstances int
+	NumJudges       int
+	NumWebInstances int
 }
 
-func (s *ServerConfig) run() {
-	if s.numJudges == 0 {
-		s.numJudges = 1
+func (s *ServerConfig) SpreadThreads(threads int) {
+	if threads < 3 {
+		s.NumWebInstances = 1
+		s.NumJudges = 1
+		return
 	}
-	if s.numWebInstances == 0 {
-		s.numWebInstances = 1
-	}
-
-	if s.numJudges+1+s.numWebInstances < runtime.NumCPU() {
-		s.numJudges = runtime.NumCPU() - 1 - s.numWebInstances
-	}
-
-	s.numGoRoutines = 1 + s.numJudges + s.numWebInstances
+	s.NumWebInstances = threads / 3
+	s.NumJudges = threads - s.NumWebInstances
 }
 
 func DefaultServerConfig() *ServerConfig {
 	s := &ServerConfig{}
-	s.run()
+	s.SpreadThreads(runtime.NumCPU())
 	return s
 }
 
 type Server struct {
-	Config  *ServerConfig
-	submits chan SubmitionProtocol
+	Config       *ServerConfig
+	Judges       map[int]chan interface{} // chans used to kill specified judges
+	WebInstances map[int]chan interface{} // or web instances
+	lastThreadID int
+	DB           *mgo.Database
 }
 
 func (s *Server) init() {
-	runtime.GOMAXPROCS(s.Config.numGoRoutines)
-	fmt.Print(s.Config.numWebInstances)
-	s.submits = make(chan SubmitionProtocol, packetBufferSize)
-	for i := 0; i < s.Config.numJudges; i++ {
-		routine := &Judge{}
-		go routine.Start(s.submits)
+	db_auth_json, err := ioutil.ReadFile("DB_auth.json")
+	if err != nil {
+		log.Fatal(err)
 	}
-	for i := 0; i < s.Config.numWebInstances; i++ {
+
+	var db_auth struct {
+		Url  string
+		DB   string
+		User string
+		Pass string
+	}
+	err = json.Unmarshal(db_auth_json, &db_auth)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var session *mgo.Session
+	session, err = mgo.Dial(db_auth.Url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	session.SetSafe(&mgo.Safe{})
+
+	s.DB = session.DB(db_auth.DB)
+
+	err = s.DB.Login(db_auth.User, db_auth.Pass)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("Successfully connected to the DB.\n")
+
+	s.Config = DefaultServerConfig()
+
+	log.Printf("Using Default Server Config:\n  judges: %d\n  web instances: %d\n  total threads: %d\n",
+		s.Config.NumJudges, s.Config.NumWebInstances, s.Config.NumJudges+s.Config.NumWebInstances)
+
+	s.Judges = make(map[int]chan interface{})
+	s.WebInstances = make(map[int]chan interface{})
+
+	for i := 0; i < s.Config.NumJudges; i++ {
+		routine := &Judge{}
+		stop := make(chan interface{}, 1)
+		go routine.Start(stop)
+		s.Judges[s.lastThreadID] = stop
+		s.lastThreadID += 1
+	}
+	for i := 0; i < s.Config.NumWebInstances; i++ {
 		routine := &WebInstance{}
-		go routine.Start(s.submits)
+		stop := make(chan interface{}, 1)
+		go routine.Start(stop)
+		s.WebInstances[s.lastThreadID] = stop
+		s.lastThreadID += 1
 	}
 }
 
@@ -91,11 +125,12 @@ func handler(rw http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 	option := req.Form.Get("option")
 
-	fmt.Fprintf(rw, "<html><title>Myjudge Control</title><body>")
+	fmt.Fprintf(rw, "<html><title>Memjudge Control</title><body>")
 
 	switch option {
 	case "stop":
 		fmt.Fprintf(rw, "<p><strong>Server gonna be stopped now.</strong></p>")
+		log.Println("Shutdown initiated...")
 		go Stop(2)
 	default:
 		fmt.Fprintf(rw, "<p>Unknown option: <strong>%s</strong></p>", option)

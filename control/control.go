@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/RemmargorP/myjudge"
+	"github.com/RemmargorP/memjudge"
 	"github.com/sevlyar/go-daemon"
 )
 
@@ -19,7 +19,7 @@ func main() {
 	}
 	option := os.Args[1]
 
-	query := Address + myjudge.MasterPort
+	query := Address + memjudge.MasterPort
 
 	switch option {
 	case "start":
@@ -42,8 +42,8 @@ func main() {
 				return
 			} else {
 				defer cntx.Release()
-				server := &myjudge.Server{}
-				server.Config = myjudge.DefaultServerConfig()
+				server := &memjudge.Server{}
+				server.Config = memjudge.DefaultServerConfig()
 				server.Serve()
 			}
 		} else {
