@@ -7,7 +7,7 @@ import (
 )
 
 func (wi *WebInstance) HomeHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles(PublicDir + "html/index.html")
+	tmpl, err := template.ParseGlob(PublicDir + "html/*.html")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -26,7 +26,7 @@ func (wi *WebInstance) HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	err = tmpl.Execute(w, data)
+	err = tmpl.ExecuteTemplate(w, "index.html", data)
 	if err != nil {
 		log.Println(err)
 	}

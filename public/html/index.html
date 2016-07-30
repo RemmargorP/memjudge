@@ -1,9 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>{{.title}}</title>
-</head>
-<body>
-  Hello, {{.name}}!<br>
-</body>
-</html>
+{{ define "index.html" }}
+{{ template "header" . }}
+
+  Hello, {{.name}}!
+
+{{ template "footer" . }}
+{{ end}}

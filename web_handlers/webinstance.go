@@ -23,6 +23,11 @@ type WebInstance struct {
 
 func (wi *WebInstance) init() {
 	wi.Router = mux.NewRouter()
+	// Static files
+	wi.Router.PathPrefix("/static/css/").Handler(http.StripPrefix("/static/css", http.FileServer(http.Dir(PublicDir+"css/"))))
+	wi.Router.PathPrefix("/static/js/").Handler(http.StripPrefix("/static/js", http.FileServer(http.Dir(PublicDir+"js/"))))
+
+	// Pages
 	wi.Router.HandleFunc("/", wi.HomeHandler)
 }
 
