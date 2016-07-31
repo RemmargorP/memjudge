@@ -23,14 +23,19 @@ body {
   text-align: center;
 }
 
-.header .menu .home, .archive, .contests, .profile, .settings {
+.menu .home, .menu .archive, .menu .contests, .menu .profile, .menu .settings {
   display: inline-block;
   padding: 8px 20px;
   -webkit-transition: 0.2s 0s all cubic-bezier(0.25,0.1,0.25,1);
   transition: 0.2s 0s all cubic-bezier(0.25,0.1,0.25,1);
 }
 
-.header .menu .home:hover, .archive:hover, .contests:hover, .profile:hover, .settings:hover {
+.menu .home:hover, .menu .archive:hover, .menu .contests:hover, .menu .profile:hover, .menu .settings:hover {
   background: #ccc;
-  background-size: auto
+  background-size: auto;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0px;
 }

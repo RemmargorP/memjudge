@@ -8,13 +8,18 @@ import (
 	"gopkg.in/mgo.v2"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"runtime"
+	"strconv"
 	"time"
 )
 
 const MasterPort = ":45100"
+const WebPort = ":8080"
 
 type ServerConfig struct {
 	NumJudges       int
@@ -28,6 +33,7 @@ func (s *ServerConfig) SpreadThreads(threads int) {
 		return
 	}
 	s.NumWebInstances = threads / 3
+	s.NumWebInstances = 2 // TODO DELETE (TESTING)
 	s.NumJudges = threads - s.NumWebInstances
 }
 
@@ -41,8 +47,9 @@ type Server struct {
 	Config       *ServerConfig
 	Judges       map[int]chan interface{} // chans used to kill specified judges
 	WebInstances map[int]chan interface{} // or web instances
-	lastThreadID int
+	lastThreadId int
 	DB           *mgo.Database
+	Proxy        *httputil.ReverseProxy
 }
 
 func (s *Server) init() {
@@ -90,18 +97,35 @@ func (s *Server) init() {
 	for i := 0; i < s.Config.NumJudges; i++ {
 		routine := &Judge{}
 		stop := make(chan interface{}, 1)
-		go routine.Start(stop, s.DB)
-		s.Judges[s.lastThreadID] = stop
-		s.lastThreadID += 1
+		go routine.Start(s.lastThreadId, stop, s.DB)
+		s.Judges[s.lastThreadId] = stop
+
+		s.lastThreadId += 1
 	}
 
 	cookieStore := sessions.NewCookieStore([]byte(db_auth.CookieStoreSalt))
+	var proxyTargets []*url.URL
 	for i := 0; i < s.Config.NumWebInstances; i++ {
 		routine := &memjudgeweb.WebInstance{}
 		stop := make(chan interface{}, 1)
-		go routine.Start(stop, s.DB, cookieStore)
-		s.WebInstances[s.lastThreadID] = stop
-		s.lastThreadID += 1
+		go routine.Start(s.lastThreadId, 9000+s.lastThreadId, stop, s.DB, cookieStore)
+		s.WebInstances[s.lastThreadId] = stop
+		url, err := url.Parse("http://127.0.0.1:" + strconv.Itoa(9000+s.lastThreadId))
+		if err != nil {
+			log.Fatal(err)
+		}
+		proxyTargets = append(proxyTargets, url)
+
+		s.lastThreadId += 1
+	}
+
+	s.Proxy = &httputil.ReverseProxy{
+		Director: func(r *http.Request) {
+			target := proxyTargets[rand.Int()%len(proxyTargets)]
+			r.URL.Scheme = target.Scheme
+			r.URL.Host = target.Host
+			//r.URL.Path = target.Path
+		},
 	}
 }
 
@@ -114,6 +138,10 @@ func (s *Server) Serve() {
 	w, _ := os.Create("log")
 	log.SetOutput(w)
 	s.init()
+
+	go func() { // PROXY (RANDOMIZED LOAD BALANCER)
+		log.Fatal(http.ListenAndServe(WebPort, s.Proxy))
+	}()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handler)
 	HttpServer := &http.Server{
@@ -136,7 +164,7 @@ func handler(rw http.ResponseWriter, req *http.Request) {
 	case "stop":
 		fmt.Fprintf(rw, "<p><strong>Server gonna be stopped now.</strong></p>")
 		log.Println("Shutdown initiated...")
-		go Stop(2)
+		go Stop(1)
 	default:
 		fmt.Fprintf(rw, "<p>Unknown option: <strong>%s</strong></p>", option)
 	}

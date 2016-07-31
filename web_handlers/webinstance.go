@@ -4,21 +4,25 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"gopkg.in/mgo.v2"
+	"html/template"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 const (
-	HTTPPORT  = ":8080"
 	TITLE     = "MemJudge"
 	PublicDir = "./public/"
 )
 
 type WebInstance struct {
-	DB     *mgo.Database
-	Store  *sessions.CookieStore
-	Stop   <-chan interface{}
-	Router *mux.Router
+	DB        *mgo.Database
+	Store     *sessions.CookieStore
+	Stop      <-chan interface{}
+	Router    *mux.Router
+	Templates *template.Template
+	Id        int
+	Port      int
 }
 
 func (wi *WebInstance) init() {
@@ -29,13 +33,21 @@ func (wi *WebInstance) init() {
 
 	// Pages
 	wi.Router.HandleFunc("/", wi.HomeHandler)
+
+	var err error
+	wi.Templates, err = template.ParseGlob(PublicDir + "html/*.html")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (wi *WebInstance) Serve() {
-	log.Fatal(http.ListenAndServe(HTTPPORT, wi.Router))
+	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(wi.Port), wi.Router))
 }
 
-func (wi *WebInstance) Start(stop <-chan interface{}, db *mgo.Database, cookieStore *sessions.CookieStore) {
+func (wi *WebInstance) Start(id int, port int, stop <-chan interface{}, db *mgo.Database, cookieStore *sessions.CookieStore) {
+	wi.Port = port
+	wi.Id = id
 	wi.DB = db
 	wi.Stop = stop
 	wi.Store = cookieStore
