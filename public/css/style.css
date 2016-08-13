@@ -1,11 +1,36 @@
 body {
   font-family: sans-serif;
-  background: #eee;
-  padding: 40px;
+  font-size: 16px;
+  background: #eaeaea;
+  margin: 30px;
+}
+
+input, select, textarea, button, table {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+input[type="text"], input[type="password"], input[type="email"] {
+  padding: 4px;
+  border: none;
+  border-bottom: solid 2px #bbb;
+  transition: border 0.1s;
+  appearance: none;
+  box-shadow: none;
+  border-radius: none;
+}
+
+input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus {
+  border-bottom: solid 2px #24B60B;
+  outline: none;
+}
+
+a:link, a:visited, a:hover, a:active {
+  text-decoration: none !important;
+  color: inherit !important;
 }
 
 .header .title {
-  height: 50px;
   display: block;
   text-align: center;
   line-height: 36px;
@@ -17,25 +42,79 @@ body {
   height: 60px;
   overflow: visible;
   display: block;
-  padding-top: 12px;
+  padding-top: 24px;
+  padding-bottom: 24px;
   font-size: 24px;
   text-transform: uppercase;
   text-align: center;
 }
 
-.menu .home, .menu .archive, .menu .contests, .menu .profile, .menu .settings {
+.menu .home, .menu .archive, .menu .contests, .menu .profile, .menu .settings, .menu .login, .menu .signup {
   display: inline-block;
-  padding: 8px 20px;
-  -webkit-transition: 0.2s 0s all cubic-bezier(0.25,0.1,0.25,1);
-  transition: 0.2s 0s all cubic-bezier(0.25,0.1,0.25,1);
 }
 
-.menu .home:hover, .menu .archive:hover, .menu .contests:hover, .menu .profile:hover, .menu .settings:hover {
-  background: #ccc;
-  background-size: auto;
+.reason {
+  font-size: 23px;
+  line-height: 40px;
+  border-left: solid 4px red;
+  padding-left: 10px;
+  border-bottom: solid 2px #ddd;
+  border-radius: 3px;
 }
+
+.button {
+  padding: 8px 20px;
+  /*-webkit-transition: color 0.2s, border-color 0.2s cubic-bezier(0.25,0.1,0.25,1);*/
+  transition: color 0.2s, border-color 0.2s cubic-bezier(0.25,0.1,0.25,1);
+  border: hidden;
+  border-color: #eaeaea;
+}
+
+.button:hover {
+  border-bottom-width: 2px;
+  border-bottom-style: solid;
+  border-color: #666;
+  color: #A52A2A;
+}
+
+.chosen {
+  color: #24B60B;
+}
+
 
 .footer {
   position: absolute;
   bottom: 0px;
+}
+
+#signup .field {
+  padding-bottom: 6px;
+  margin: 4px;
+  width: 510px;
+}
+#signup .field .delim {
+  border-bottom: darkgray 1px solid;
+  margin-top: 5px;
+}
+#signup .field .name {
+  width: 70px;
+  text-align: right;
+  display: inline-block;
+  margin-right: 10px;
+}
+#signup .field .input {
+  width: 250px;
+}
+
+#signup .field .requirements {
+  border-left-color: red;
+  background-color: #ECACAC;
+  border-left-width: 4px;
+  border-left-style: solid;
+  margin-top: 10px;
+  padding: 3px;
+  padding-left: 10px;
+  border-radius: 3px;
+  overflow: hidden;
+  text-align: center;
 }

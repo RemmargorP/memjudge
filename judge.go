@@ -8,6 +8,6 @@ type Judge struct {
 	DB *mgo.Database
 }
 
-func (j *Judge) Start(id int, stop <-chan interface{}, db *mgo.Database) {
+func (j *Judge) Start(id int, stop <-chan bool, db *mgo.Database) {
 
 }

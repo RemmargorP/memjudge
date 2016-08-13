@@ -2,16 +2,30 @@
 <html>
 <head>
   <link href="static/css/style.css" rel="stylesheet">
+  <script src="/static/js/jquery-3.1.0.min.js"></script>
+  <script src="/static/js/memjudge.js"></script>
+  <title>{{.title}}</title>
 </head>
 <body>
 <div class="header">
-  <div class="title" >{{.title}} </div>
-  <div class="menu" >
-    <span class="home" >home </span>
-    <span class="contests" >contests </span>
-    <span class="archive" >archive </span>
-    <span class="profile" >profile </span>
-    <span class="settings" >settings </span>
+  <div class="title">{{.title}}<sup style="color:#e8a623;">α</sup></div>
+  <div class="menu">
+    <a href="/"><span class="home button {{if .webinfo.isHome}}chosen{{end}}">home</span></a>
+    <span class="contests button {{if .webinfo.isContests}}chosen{{end}}">contests</span>
+    <span class="archive button {{if .webinfo.isArchive}}chosen{{end}}">archive </span>
+    {{if .user.loggedIn}}
+    <span class="profile button {{if .webinfo.isProfile}}chosen{{end}}">profile</span>
+    <span class="settings button {{if .webinfo.isSettings}}chosen{{end}}">settings</span>
+    {{end}}
+    {{if not .user.loggedIn}}
+    <span class="login button {{if .webinfo.isLogin}}chosen{{end}}">login</span>
+    <a href="/signup"><span class="signup button {{if .webinfo.isSignUp}}chosen{{end}}">sign up</span></a>
+    {{end}}
   </div>
 </div>
+{{if .hasReason}}
+<div class="reason">
+  {{ .reason }}   
+</div>
+{{end}}
 {{end}}

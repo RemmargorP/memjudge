@@ -45,8 +45,8 @@ func DefaultServerConfig() *ServerConfig {
 
 type Server struct {
 	Config       *ServerConfig
-	Judges       map[int]chan interface{} // chans used to kill specified judges
-	WebInstances map[int]chan interface{} // or web instances
+	Judges       map[int]chan bool // chans used to kill specified judges
+	WebInstances map[int]chan bool // or web instances
 	lastThreadId int
 	DB           *mgo.Database
 	Proxy        *httputil.ReverseProxy
@@ -91,12 +91,12 @@ func (s *Server) init() {
 	log.Printf("Using Default Server Config:\n  judges: %d\n  web instances: %d\n  total threads: %d\n",
 		s.Config.NumJudges, s.Config.NumWebInstances, s.Config.NumJudges+s.Config.NumWebInstances)
 
-	s.Judges = make(map[int]chan interface{})
-	s.WebInstances = make(map[int]chan interface{})
+	s.Judges = make(map[int]chan bool)
+	s.WebInstances = make(map[int]chan bool)
 
 	for i := 0; i < s.Config.NumJudges; i++ {
 		routine := &Judge{}
-		stop := make(chan interface{}, 1)
+		stop := make(chan bool, 1)
 		go routine.Start(s.lastThreadId, stop, s.DB)
 		s.Judges[s.lastThreadId] = stop
 
@@ -107,7 +107,7 @@ func (s *Server) init() {
 	var proxyTargets []*url.URL
 	for i := 0; i < s.Config.NumWebInstances; i++ {
 		routine := &memjudgeweb.WebInstance{}
-		stop := make(chan interface{}, 1)
+		stop := make(chan bool, 1)
 		go routine.Start(s.lastThreadId, 9000+s.lastThreadId, stop, s.DB, cookieStore)
 		s.WebInstances[s.lastThreadId] = stop
 		url, err := url.Parse("http://127.0.0.1:" + strconv.Itoa(9000+s.lastThreadId))
@@ -129,7 +129,13 @@ func (s *Server) init() {
 	}
 }
 
-func Stop(seconds int64) {
+func (s *Server) Stop(seconds int64) {
+	for _, j := range s.Judges {
+		j <- true
+	}
+	for _, wi := range s.WebInstances {
+		wi <- true
+	}
 	time.Sleep(time.Duration(seconds) * time.Second)
 	os.Exit(0)
 }
@@ -143,7 +149,7 @@ func (s *Server) Serve() {
 		log.Fatal(http.ListenAndServe(WebPort, s.Proxy))
 	}()
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", handler)
+	mux.HandleFunc("/", s.handler)
 	HttpServer := &http.Server{
 		Addr:           MasterPort,
 		Handler:        mux,
@@ -154,7 +160,7 @@ func (s *Server) Serve() {
 	log.Fatal(HttpServer.ListenAndServe())
 }
 
-func handler(rw http.ResponseWriter, req *http.Request) {
+func (s *Server) handler(rw http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 	option := req.Form.Get("option")
 
@@ -164,7 +170,7 @@ func handler(rw http.ResponseWriter, req *http.Request) {
 	case "stop":
 		fmt.Fprintf(rw, "<p><strong>Server gonna be stopped now.</strong></p>")
 		log.Println("Shutdown initiated...")
-		go Stop(1)
+		go s.Stop(1)
 	default:
 		fmt.Fprintf(rw, "<p>Unknown option: <strong>%s</strong></p>", option)
 	}

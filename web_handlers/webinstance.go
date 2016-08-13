@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 const (
@@ -18,11 +19,12 @@ const (
 type WebInstance struct {
 	DB        *mgo.Database
 	Store     *sessions.CookieStore
-	Stop      <-chan interface{}
+	Stop      <-chan bool
 	Router    *mux.Router
 	Templates *template.Template
 	Id        int
 	Port      int
+	ticker    *time.Ticker
 }
 
 func (wi *WebInstance) init() {
@@ -33,19 +35,50 @@ func (wi *WebInstance) init() {
 
 	// Pages
 	wi.Router.HandleFunc("/", wi.HomeHandler)
+	wi.Router.HandleFunc("/signup", wi.SignUpHandler)
+	wi.Router.HandleFunc("/signup/handle", wi.SignUpCheckHandler)
+	wi.reloadTemplates()
 
+	wi.ticker = time.NewTicker(500 * time.Millisecond) //every 0.5s
+	go wi.checkTicker()
+}
+
+func (wi *WebInstance) checkTicker() {
+	for {
+		select {
+		case <-wi.ticker.C:
+			wi.reloadTemplates()
+		case <-wi.Stop:
+			wi.stop()
+			return
+		}
+	}
+}
+
+var funcMap = template.FuncMap{ // Custom template functions
+	"not": func(a interface{}) interface{} {
+		b := bool(a.(bool))
+		return interface{}(!b)
+	},
+}
+
+func (wi *WebInstance) reloadTemplates() {
 	var err error
-	wi.Templates, err = template.ParseGlob(PublicDir + "html/*.html")
+	wi.Templates, err = template.New("").Funcs(funcMap).ParseGlob(PublicDir + "html/*.html")
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func (wi *WebInstance) stop() {
+	wi.ticker.Stop()
 }
 
 func (wi *WebInstance) Serve() {
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(wi.Port), wi.Router))
 }
 
-func (wi *WebInstance) Start(id int, port int, stop <-chan interface{}, db *mgo.Database, cookieStore *sessions.CookieStore) {
+func (wi *WebInstance) Start(id int, port int, stop <-chan bool, db *mgo.Database, cookieStore *sessions.CookieStore) {
 	wi.Port = port
 	wi.Id = id
 	wi.DB = db

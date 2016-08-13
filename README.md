@@ -32,12 +32,15 @@ Online Judge for Competitive Programming Contests. And Memes
   ```js
   {
     "_id": {
+      "_id": _id,
       "login": ...,
       "passwordHash": ...,
-      "nickname": ...,
+      "lastSID": len 32 hex,
+      "lastLoginDate": date,
+      "lastLoginMaxAge": duration,
       "email": ...,
-      "name": ...,
-      "surname": ...,
+      "firstName": ...,
+      "lastName": ...,
       "address": ..., #and other (index, ...)
       "solutions": [ids],
       "contests": [ids],
