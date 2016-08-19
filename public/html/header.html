@@ -3,7 +3,10 @@
 <head>
   <link href="static/css/style.css" rel="stylesheet">
   <script src="/static/js/jquery-3.1.0.min.js"></script>
-  <script src="/static/js/memjudge.js"></script>
+  <script src="/static/js/core.js"></script>
+  {{ range $key, $js := .additionalJS }}
+  <script src="/static/js/{{$js}}"></script>
+  {{end}}
   <title>{{.title}}</title>
 </head>
 <body>

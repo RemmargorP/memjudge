@@ -1,6 +1,7 @@
+// Sign Up page funcs
+
 function checkSignUpForm() {
   var login = $("#reg_login").val();
-  console.log(login);
   var ok = !(login.includes(" ") || login.length < 3 || login.length > 64), total = true;
   total = total & ok;
 
@@ -32,6 +33,27 @@ function checkSignUpForm() {
 
   return total;
 }
+
+function signup() {
+  if (!checkSignUpForm()) return;
+  
+  var xhr = new XMLHttpRequest();
+  var url = "/api/signup";
+
+  var req = JSON.stringify({"Login": $("#reg_login").val(), "Email": $("#reg_email").val(), "Password": $("#reg_pwd").val()});
+
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState == 4) {
+      $("#result").text(xhr.responseText); 
+      var tmp = JSON.parse(xhr.responseText);
+    }
+  };
+
+  xhr.open("POST", url, true);
+  xhr.send(req)
+}
+
+// Utils
 
 function validateEmail(email) {
     var re = /\S+@\S+\.\S+/;

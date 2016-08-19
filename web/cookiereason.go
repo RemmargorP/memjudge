@@ -1,4 +1,4 @@
-package memjudgeweb
+package web
 
 import (
 	"github.com/gorilla/sessions"

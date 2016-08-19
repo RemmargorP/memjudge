@@ -1,4 +1,4 @@
-{{ define "registration.html" }}
+{{ define "signup.html" }}
 {{ template "header" . }}
 
 <div id="signup" align="center">
@@ -21,28 +21,9 @@
     <input type="button" value="Sign Up" onclick="signup();" class="register form button">
   </div>
 </div>
-<!--
-  <tr>
-    <td align="right">Password:</td>
-    <td><input id="reg_pwd" type="password" name="pwd" class="register form" oninput="checkRegisterForm();"></td>
-    <td><div id="reg_pwd.req" class="requirements register" style="visibility:hidden"></div></td>
-  </tr> 
-  
-  <tr>
-    <td align="right">First name:</td>
-    <td><input id="reg_firstname" type="text" name="firstname" class="register form"></td>
-    <td></td>
-  </tr>
 
-  <tr>
-    <td align="right">Last name:</td>
-    <td><input id="reg_lastname" type="text" name="lastname" class="register form" oninput="checkRegisterForm();"></td>
-    <td></td>
-  </tr>
-
-  <tr>
-    <td colspan="2" align="center"></td>
-  </tr> -->
+<div id="result" align="center">
+</div>
 
 <script type="text/javascript">$(document).ready(function() {checkSignUpForm();});</script>
 

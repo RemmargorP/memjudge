@@ -1,6 +1,7 @@
-package memjudgemodels
+package models
 
 import (
+	"github.com/RemmargorP/memjudge/utils"
 	"github.com/gorilla/sessions"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -19,7 +20,16 @@ type User struct {
 	LastLoginMaxAge time.Duration `bson:"lastLoginMaxAge,omitempty" json:"lastLoginMaxAge,omitempty"`
 }
 
-func CheckUserLoginInfo(s *sessions.Session, db *mgo.Database) *User {
+func CheckUserDataCorrectness(login, email, password string) bool {
+	ok := true
+	ok = ok && len(login) >= 3 && len(login) <= 64
+	matched, _ := utils.ValidateEmail(email)
+	ok = ok && matched
+	ok = ok && len(password) >= 6 && len(password) <= 64
+	return ok
+}
+
+func GetUserFromSession(s *sessions.Session, db *mgo.Database) *User {
 	sid_raw := s.Values["SID"]
 	var sid string
 	switch sid_raw.(type) {

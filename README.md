@@ -3,6 +3,9 @@
 
 Online Judge for Competitive Programming Contests. And Memes
 
+###**Version**###
+0.0-a0
+
 ##**Structure**##
 1. Front End:
   * JavaScript:

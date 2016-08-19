@@ -1,4 +1,4 @@
-package memjudgeweb
+package web
 
 import (
 	"github.com/gorilla/mux"
@@ -19,11 +19,11 @@ const (
 type WebInstance struct {
 	DB        *mgo.Database
 	Store     *sessions.CookieStore
-	Stop      <-chan bool
 	Router    *mux.Router
+	Stop      <-chan bool
 	Templates *template.Template
-	Id        int
 	Port      int
+	Id        int
 	ticker    *time.Ticker
 }
 
@@ -36,8 +36,10 @@ func (wi *WebInstance) init() {
 	// Pages
 	wi.Router.HandleFunc("/", wi.HomeHandler)
 	wi.Router.HandleFunc("/signup", wi.SignUpHandler)
-	wi.Router.HandleFunc("/signup/handle", wi.SignUpCheckHandler)
 	wi.reloadTemplates()
+
+	// API
+	wi.Router.HandleFunc("/api/signup", wi.APISignUpHandler)
 
 	wi.ticker = time.NewTicker(500 * time.Millisecond) //every 0.5s
 	go wi.checkTicker()

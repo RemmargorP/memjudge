@@ -1,4 +1,4 @@
-package memjudge
+package judge
 
 import (
 	"gopkg.in/mgo.v2"

@@ -70,7 +70,7 @@ a:link, a:visited, a:hover, a:active {
   border-color: #eaeaea;
 }
 
-.button:hover {
+.button:hover, .button:focus {
   border-bottom-width: 2px;
   border-bottom-style: solid;
   border-color: #666;
@@ -92,10 +92,7 @@ a:link, a:visited, a:hover, a:active {
   margin: 4px;
   width: 510px;
 }
-#signup .field .delim {
-  border-bottom: darkgray 1px solid;
-  margin-top: 5px;
-}
+
 #signup .field .name {
   width: 70px;
   text-align: right;

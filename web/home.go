@@ -1,7 +1,7 @@
-package memjudgeweb
+package web
 
 import (
-	models "github.com/RemmargorP/memjudge/models"
+	"github.com/RemmargorP/memjudge/models"
 	"log"
 	"net/http"
 )
@@ -18,7 +18,7 @@ func (wi *WebInstance) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Sessions fkt up: ", err)
 	}
 
-	user := models.CheckUserLoginInfo(session, wi.DB)
+	user := models.GetUserFromSession(session, wi.DB)
 
 	data["user"] = map[string]interface{}{"loggedIn": user.IsLoggedIn()}
 
