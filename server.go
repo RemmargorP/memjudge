@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/RemmargorP/memjudge/judge"
 	"github.com/RemmargorP/memjudge/web"
-	"github.com/gorilla/sessions"
 	"gopkg.in/mgo.v2"
 	"io/ioutil"
 	"log"
@@ -104,12 +103,11 @@ func (s *Server) init() {
 		s.lastThreadId += 1
 	}
 
-	cookieStore := sessions.NewCookieStore([]byte(db_auth.CookieStoreSalt))
 	var proxyTargets []*url.URL
 	for i := 0; i < s.Config.NumWebInstances; i++ {
 		routine := &web.WebInstance{}
 		stop := make(chan bool, 1)
-		go routine.Start(s.lastThreadId, 9000+s.lastThreadId, stop, s.DB, cookieStore)
+		go routine.Start(s.lastThreadId, 9000+s.lastThreadId, stop, s.DB)
 		s.WebInstances[s.lastThreadId] = stop
 		url, err := url.Parse("http://127.0.0.1:" + strconv.Itoa(9000+s.lastThreadId))
 		if err != nil {

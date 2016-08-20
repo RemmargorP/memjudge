@@ -1,14 +1,15 @@
 package models
 
 import (
+	"crypto/md5"
+	"fmt"
 	"github.com/RemmargorP/memjudge/utils"
-	"github.com/gorilla/sessions"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"io"
+	"net/http"
 	"time"
 )
-
-const SIDLength = 32
 
 type User struct {
 	Id              bson.ObjectId `bson:"_id,omitempty" json:"_id,omitempty"`
@@ -29,18 +30,13 @@ func CheckUserDataCorrectness(login, email, password string) bool {
 	return ok
 }
 
-func GetUserFromSession(s *sessions.Session, db *mgo.Database) *User {
-	sid_raw := s.Values["SID"]
-	var sid string
-	switch sid_raw.(type) {
-	case string:
-		sid = string(sid_raw.(string))
-	default:
+func GetUserFromCookie(r *http.Request, db *mgo.Database) *User {
+	sid := utils.GetCookieValue(r, "SID")
+
+	if len(sid) == 0 {
 		return nil
 	}
-	if len(string(sid)) != SIDLength {
-		return nil
-	}
+
 	var user *User
 	db.C("users").Find(bson.M{"lastSID": string(sid)}).One(user)
 
@@ -56,4 +52,10 @@ func (u *User) IsLoggedIn() bool {
 		return false
 	}
 	return time.Now().Before(u.LastLoginDate.Add(u.LastLoginMaxAge))
+}
+
+func GenerateSID(login, ip string) string {
+	h := md5.New()
+	io.WriteString(h, login+"/"+ip)
+	return fmt.Sprintf("%x", h.Sum(nil))
 }

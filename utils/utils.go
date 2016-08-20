@@ -7,8 +7,27 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"regexp"
 )
+
+func GetCookieValue(r *http.Request, name string) string {
+	cookie, err := r.Cookie(name)
+	if err != nil {
+		return ""
+	}
+	return cookie.Value
+}
+
+func EraseCookie(w http.ResponseWriter, r *http.Request, name string) {
+	cookie, err := r.Cookie(name)
+	if err != nil {
+		return
+	}
+	cookie.MaxAge = 0
+	cookie.Value = ""
+	http.SetCookie(w, cookie)
+}
 
 func ValidateEmail(e string) (bool, error) {
 	return regexp.MatchString(`\S+@\S+\.\S+`, e)

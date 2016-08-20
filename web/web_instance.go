@@ -2,7 +2,6 @@ package web
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"gopkg.in/mgo.v2"
 	"html/template"
 	"log"
@@ -18,7 +17,6 @@ const (
 
 type WebInstance struct {
 	DB        *mgo.Database
-	Store     *sessions.CookieStore
 	Router    *mux.Router
 	Stop      <-chan bool
 	Templates *template.Template
@@ -80,12 +78,11 @@ func (wi *WebInstance) Serve() {
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(wi.Port), wi.Router))
 }
 
-func (wi *WebInstance) Start(id int, port int, stop <-chan bool, db *mgo.Database, cookieStore *sessions.CookieStore) {
+func (wi *WebInstance) Start(id int, port int, stop <-chan bool, db *mgo.Database) {
 	wi.Port = port
 	wi.Id = id
 	wi.DB = db
 	wi.Stop = stop
-	wi.Store = cookieStore
 	wi.init()
 	wi.Serve()
 }

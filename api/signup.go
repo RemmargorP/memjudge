@@ -6,7 +6,6 @@ import (
 	"github.com/RemmargorP/memjudge/utils"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"log"
 	"time"
 )
 
@@ -23,7 +22,6 @@ func SignUp(db *mgo.Database, login, email, password string) (*models.User, erro
 	}
 
 	db.C("users").Find(bson.M{"email": email}).One(&user)
-	log.Println(user)
 	if user != nil {
 		return nil, errors.New("Email already taken")
 	}
