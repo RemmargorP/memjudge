@@ -34,10 +34,12 @@ func (wi *WebInstance) init() {
 	// Pages
 	wi.Router.HandleFunc("/", wi.HomeHandler)
 	wi.Router.HandleFunc("/signup", wi.SignUpHandler)
+	wi.Router.HandleFunc("/login", wi.LoginHandler)
 	wi.reloadTemplates()
 
 	// API
 	wi.Router.HandleFunc("/api/signup", wi.APISignUpHandler)
+	wi.Router.HandleFunc("/api/login", wi.APILoginHandler)
 
 	wi.ticker = time.NewTicker(500 * time.Millisecond) //every 0.5s
 	go wi.checkTicker()

@@ -10,7 +10,7 @@ import (
 )
 
 func SignUp(db *mgo.Database, login, email, password string) (*models.User, error) {
-	if !models.CheckUserDataCorrectness(login, email, password) {
+	if !models.CheckSignUpDataCorrectness(login, email, password) {
 		return nil, errors.New("Invalid login, email or password")
 	}
 
@@ -26,7 +26,7 @@ func SignUp(db *mgo.Database, login, email, password string) (*models.User, erro
 		return nil, errors.New("Email already taken")
 	}
 
-	user = &models.User{bson.NewObjectId(), login, utils.Encrypt(password), email, "", time.Unix(0, 0), 1 * time.Millisecond}
+	user = &models.User{bson.NewObjectId(), login, utils.Encrypt(password), email, "", time.Unix(0, 0), time.Unix(0, 0)}
 
 	db.C("users").Insert(user)
 

@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"time"
 )
 
 func GetCookieValue(r *http.Request, name string) string {
@@ -24,7 +25,8 @@ func EraseCookie(w http.ResponseWriter, r *http.Request, name string) {
 	if err != nil {
 		return
 	}
-	cookie.MaxAge = 0
+	cookie.Expires = time.Now().Add(-1 * time.Second).UTC() //now - 1s
+
 	cookie.Value = ""
 	http.SetCookie(w, cookie)
 }

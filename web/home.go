@@ -14,7 +14,7 @@ func (wi *WebInstance) HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	user := models.GetUserFromCookie(r, wi.DB)
 
-	data["user"] = map[string]interface{}{"loggedIn": user.IsLoggedIn()}
+	models.GatherUserInfo(user, &data)
 
 	wi.ParseCookieReason(w, r, &data)
 

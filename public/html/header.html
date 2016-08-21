@@ -14,14 +14,13 @@
   <div class="title">{{.title}}<sup style="color:#e8a623;">α</sup></div>
   <div class="menu">
     <a href="/"><span class="home button {{if .webinfo.isHome}}chosen{{end}}">home</span></a>
-    <span class="contests button {{if .webinfo.isContests}}chosen{{end}}">contests</span>
-    <span class="archive button {{if .webinfo.isArchive}}chosen{{end}}">archive </span>
     {{if .user.loggedIn}}
-    <span class="profile button {{if .webinfo.isProfile}}chosen{{end}}">profile</span>
-    <span class="settings button {{if .webinfo.isSettings}}chosen{{end}}">settings</span>
+    <span class="contests button {{if .webinfo.isContests}}chosen{{end}}">contests</span>
+    <span class="profile button {{if .webinfo.isProfile}}chosen{{end}}">{{.user.login}}</span>
+    <span class="logout button" onclick="logout();" style="cursor: pointer">logout</span>
     {{end}}
     {{if not .user.loggedIn}}
-    <span class="login button {{if .webinfo.isLogin}}chosen{{end}}">login</span>
+    <a href="/login"><span class="login button {{if .webinfo.isLogin}}chosen{{end}}">login</span></a>
     <a href="/signup"><span class="signup button {{if .webinfo.isSignUp}}chosen{{end}}">sign up</span></a>
     {{end}}
   </div>
