@@ -1,10 +1,7 @@
 .trash/*
 
-DB_auth*
-log
-pid
+*log
+*pid
 
-control/control
-control/log
-control/pid
-control/DB_auth*
+memjudgectl
+createadmin
