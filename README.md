@@ -1,9 +1,9 @@
 **MemJudge**
 ========
 
-Online Judge for Competitive Programming Contests. And Memes
-P.S. If you have better name for this thing, please tell me ._____.
-P.P.S. I will appreciate any advices as well
+Online Judge for Competitive Programming Contests. And Memes  
+P.S. If you have better name for this thing, please tell me ._____.  
+P.P.S. I will appreciate any advices as well  
 ###**Version**###
 0.0-a0
 
