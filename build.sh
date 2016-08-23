@@ -1,7 +1,7 @@
-./memjudgectl stop
+./mjudgectl stop
 sleep 2
 
-echo "Building memjudgectl" && go build github.com/RemmargorP/memjudge/cmd/memjudgectl
-echo "Building createadmin" && go build github.com/RemmargorP/memjudge/cmd/createadmin
+echo "Building mjudgectl" && go build github.com/RemmargorP/mjudge/cmd/mjudgectl
+echo "Building createadmin" && go build github.com/RemmargorP/mjudge/cmd/createadmin
 
-./memjudgectl start
+./mjudgectl start
