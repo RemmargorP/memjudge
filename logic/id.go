@@ -2,6 +2,7 @@ package logic
 
 import (
 	"github.com/RemmargorP/mjudge/models"
+
 	"github.com/satori/go.uuid"
 )
 

@@ -1,0 +1,13 @@
+{
+  "DB_MongoDB": {
+    "URL": "mongodb://localhost",
+    "Login": "mjudge",
+    "Password": "abacaba",
+    "Database": "mjudge"
+  },
+  "Encryption": {
+    "CookieStoreSalt": "asjdghqwnlnkqhrqpnasd123sad24ioimq",
+    "PasswordLeftSalt": "@o22>mrL8dCyvM#7@Tg6>SuU|IIym)bV",
+    "PasswordRightSalt": "kxMmk&P]Dx}M3'wgdo_E}@OFRn[:Kt8."
+  }
+}

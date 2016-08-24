@@ -1,9 +1,5 @@
 package models
 
-import (
-	"time"
-)
-
 type Test struct {
 	Input       string
 	Output      string
