@@ -10,6 +10,7 @@ import (
 	"github.com/RemmargorP/mjudge/models"
 
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 func DBReposFromConfig(config []byte) (*interfaces.Repos, error) {
@@ -52,17 +53,26 @@ type DBContestsRepo struct {
 	DB *mgo.Database
 }
 
-func (r DBContestsRepo) GetById(models.Id) (*models.Contest, error) {
-	return nil, nil
-}
-func (r DBContestsRepo) GetByData(sample map[string]interface{}) (*models.Contest, error) {
-	return nil, nil
+func (r DBContestsRepo) GetById(id models.Id) (*models.Contest, error) {
+	var res *models.Contest
+	err := r.DB.C("contests").FindId(id).One(&res)
+	return res, err
 }
 func (r DBContestsRepo) Get(limit int) ([]*models.Contest, error) {
-	return nil, nil
+	var res []*models.Contest
+	var err error
+	if limit == -1 {
+		err = r.DB.C("contests").Find(bson.M{}).All(&res)
+	} else {
+		err = r.DB.C("contests").Find(bson.M{}).Limit(limit).All(&res)
+	}
+	return res, err
 }
-func (r DBContestsRepo) Save(*models.Contest) error {
-	return nil
+func (r DBContestsRepo) Save(contest *models.Contest) error {
+	_, err := r.DB.C("contests").Upsert(bson.M{"_id": contest.Id}, bson.M{
+		"$set": contest,
+	})
+	return err
 }
 
 // Languages
@@ -83,9 +93,6 @@ type DBProblemsRepo struct {
 func (r DBProblemsRepo) GetById(models.Id) (*models.Problem, error) {
 	return nil, nil
 }
-func (r DBProblemsRepo) GetByData(sample map[string]interface{}) (*models.Problem, error) {
-	return nil, nil
-}
 func (r DBProblemsRepo) Get(limit int) ([]*models.Problem, error) {
 	return nil, nil
 }
@@ -99,9 +106,6 @@ type DBSubmissionsRepo struct {
 }
 
 func (r DBSubmissionsRepo) GetById(models.Id) (*models.Submission, error) {
-	return nil, nil
-}
-func (r DBSubmissionsRepo) GetByData(sample map[string]interface{}) (*models.Submission, error) {
 	return nil, nil
 }
 func (r DBSubmissionsRepo) Get(limit int) ([]*models.Submission, error) {
@@ -119,9 +123,6 @@ type DBTestingResultsRepo struct {
 func (r DBTestingResultsRepo) GetById(models.Id) (*models.TestingResult, error) {
 	return nil, nil
 }
-func (r DBTestingResultsRepo) GetByData(sample map[string]interface{}) (*models.TestingResult, error) {
-	return nil, nil
-}
 func (r DBTestingResultsRepo) Get(limit int) ([]*models.TestingResult, error) {
 	return nil, nil
 }
@@ -135,9 +136,6 @@ type DBUsersRepo struct {
 }
 
 func (r DBUsersRepo) GetById(models.Id) (*models.User, error) {
-	return nil, nil
-}
-func (r DBUsersRepo) GetByData(sample map[string]interface{}) (*models.User, error) {
 	return nil, nil
 }
 func (r DBUsersRepo) Get(limit int) ([]*models.User, error) {

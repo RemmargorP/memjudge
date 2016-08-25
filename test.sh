@@ -1,0 +1,1 @@
+go test -benchmem github.com/RemmargorP/mjudge/extensions/db

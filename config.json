@@ -2,7 +2,7 @@
   "DB_MongoDB": {
     "URL": "mongodb://localhost",
     "Login": "mjudge",
-    "Password": "abacaba",
+    "Password": "misformemes",
     "Database": "mjudge"
   },
   "Encryption": {

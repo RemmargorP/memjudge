@@ -1,8 +1,8 @@
 package models
 
 type Contest struct {
-	Id      Id
-	Problem []Id
-	Users   []Id
-	Rights  []Id // UserId -> Right
+	Id       Id   `bson:"_id"`
+	Problems []Id `bson:"problems"`
+	Users    []Id `bson:"users"`
+	Rights   []Id `bson:"rights"` // UserId -> Right
 }
