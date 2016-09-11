@@ -24,8 +24,7 @@ func TestMain(m *testing.M) {
 	}
 
 	var Config struct {
-		Encryption map[string]interface{}
-		DB_MongoDB map[string]interface{}
+		DB_MongoDB_test map[string]interface{}
 	}
 	err = json.Unmarshal(rawConfig, &Config)
 	if err != nil {
@@ -33,7 +32,7 @@ func TestMain(m *testing.M) {
 	}
 
 	var dbConfig []byte
-	dbConfig, err = json.Marshal(Config.DB_MongoDB)
+	dbConfig, err = json.Marshal(Config.DB_MongoDB_test)
 
 	repos, err = DBReposFromConfig(dbConfig)
 	if err != nil {
@@ -68,8 +67,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestContestsGetById(t *testing.T) {
-	defer db.C("contests").DropCollection()
-	db.C("contests").Insert(bson.M{"_id": "abacaba"})
+	defer db.C("test_contests").DropCollection()
+	db.C("test_contests").Insert(bson.M{"_id": "abacaba"})
 	res, err := repos.Contests.GetById(models.Id("abacaba"))
 	if err != nil {
 		t.Fatal(err)
@@ -83,9 +82,9 @@ func TestContestsGetById(t *testing.T) {
 }
 
 func TestContestsGet(t *testing.T) {
-	defer db.C("contests").DropCollection()
+	defer db.C("test_contests").DropCollection()
 	for i := 0; i < 10; i++ {
-		db.C("contests").Insert(models.Contest{Id: models.Id(i)})
+		db.C("test_contests").Insert(models.Contest{Id: models.Id(i)})
 	}
 	res, err := repos.Contests.Get(-1)
 	if err != nil {
@@ -103,7 +102,7 @@ func TestContestsGet(t *testing.T) {
 	}
 }
 func TestContestsSave(t *testing.T) {
-	defer db.C("contests").DropCollection()
+	defer db.C("test_contests").DropCollection()
 	err := repos.Contests.Save(&models.Contest{
 		Id:       "lel",
 		Problems: []models.Id{"aaas", "asdas", "ioi", "хых"},

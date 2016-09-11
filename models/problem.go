@@ -1,9 +1,9 @@
 package models
 
 type Problem struct {
-	Id          Id
-	Checker     Id // Submission
-	Tests       []Test
-	Submissions []Id
-	Rights      []Id // UserId -> Right
+	Id          Id     `bson:"_id"`
+	Checker     Id     `bson:"checker"` // Submission
+	Tests       []Test `bson:"tests"`
+	Submissions []Id   `bson:"submissions"`
+	Rights      []Id   `bson:"rights"` // UserId -> Right
 }

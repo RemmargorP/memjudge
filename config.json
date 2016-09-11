@@ -3,7 +3,15 @@
     "URL": "mongodb://localhost",
     "Login": "mjudge",
     "Password": "misformemes",
-    "Database": "mjudge"
+    "Database": "mjudge",
+    "Prefix": ""
+  },
+  "DB_MongoDB_test": {
+    "URL": "mongodb://localhost",
+    "Login": "mjudge",
+    "Password": "misformemes",
+    "Database": "mjudge",
+    "Prefix": "test_"
   },
   "Encryption": {
     "CookieStoreSalt": "asjdghqwnlnkqhrqpnasd123sad24ioimq",
