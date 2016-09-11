@@ -1,7 +1,5 @@
 .trash/*
+bin/*
 
 *log
 *pid
-
-mjudgectl$
-createadmin$
