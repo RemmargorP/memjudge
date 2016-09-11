@@ -182,6 +182,17 @@ func (r DBUsersRepo) GetById(id models.Id) (*models.User, error) {
 	err := r.DB.C(r.Prefix + "users").FindId(id).One(&res)
 	return res, err
 }
+func (r DBUsersRepo) GetByLogin(login string) (*models.User, error) {
+	var res *models.User
+	err := r.DB.C(r.Prefix + "users").Find(bson.M{"login": login}).One(&res)
+	return res, err
+}
+func (r DBUsersRepo) GetByEmail(email string) (*models.User, error) {
+	var res *models.User
+	err := r.DB.C(r.Prefix + "users").Find(bson.M{"email": email}).One(&res)
+	return res, err
+}
+
 func (r DBUsersRepo) Get(limit int) ([]*models.User, error) {
 	var res []*models.User
 	var err error

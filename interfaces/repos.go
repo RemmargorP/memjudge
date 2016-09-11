@@ -44,6 +44,8 @@ type TestingResultsRepo interface {
 
 type UsersRepo interface {
 	GetById(models.Id) (*models.User, error)
+	GetByLogin(string) (*models.User, error)
+	GetByEmail(string) (*models.User, error)
 	Get(limit int) ([]*models.User, error)
 	Save(*models.User) error
 }
